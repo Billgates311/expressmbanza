@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Commander une course | Mbanza Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root {
+            --bg: #09090b;
+            --card: #141417;
+            --accent: #e17306;
+            --accent-gradient: linear-gradient(135deg, #e17306 0%, #ff8c21 100%);
+            --input-bg: #1f1f23;
+            --text: #ffffff;
+            --text-dim: #a1a1aa;
+            --border: #27272a;
+            --green: #10b981;
+            --green-bg: rgba(16, 185, 129, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 440px;
+            height: 95vh;
+            background: var(--card);
+            border-radius: 32px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        .app-header {
+            padding: 20px 24px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+            background: var(--card);
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand { font-size: 18px; font-weight: 800; color: var(--accent); letter-spacing: 0.5px; }
+        .wallet-badge { font-size: 13px; font-weight: 700; color: var(--green); background: var(--green-bg); padding: 4px 10px; border-radius: 10px; }
+
+        .progress-container {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            flex: 1;
+            background: var(--border);
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+
+        .progress-bar.active { background: var(--accent-gradient); }
+
+       
+        .slides-wrapper {
+            display: flex;
+            flex: 1;
+            width: 300%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 15px 24px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .slide h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+        .slide .subtitle { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+
+        .input-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 4px 12px;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .input-row { position: relative; display: flex; align-items: center; }
+        .input-row i { position: absolute; left: 4px; color: var(--accent); font-size: 14px; }
+        .input-row input {
+            width: 100%; padding: 14px 10px 14px 34px;
+            background: transparent; border: none; outline: none;
+            color: #fff; font-size: 14px; font-weight: 500;
+        }
+        .line-sep { height: 1px; background: var(--border); margin-left: 34px; }
+
+        .quick-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;
+        }
+        .quick-card {
+            background: #1b1b1f; border: 1px solid var(--border);
+            padding: 12px; border-radius: 14px; cursor: pointer; transition: 0.2s;
+            position: relative;
+        }
+        .quick-card:hover { border-color: var(--accent); background: rgba(225,115,6,0.02); }
+        .quick-card div { font-size: 11px; color: var(--text-dim); }
+        .quick-card b { font-size: 13px; color: #fff; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .price-hero {
+            background: var(--green-bg); border: 1px solid rgba(16, 185, 129, 0.15);
+            padding: 14px; border-radius: 18px; text-align: center; margin-bottom: 16px;
+        }
+        .price-hero span { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .price-hero h4 { font-size: 30px; font-weight: 800; color: var(--green); margin-top: 2px; }
+        .surge-badge { display: inline-block; background: rgba(225,115,6,0.15); color: var(--accent); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; margin-top: 4px; }
+
+        .vehicle-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .vehicle-option {
+            background: #1b1b1f; border: 1px solid var(--border);
+            padding: 12px 14px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s;
+        }
+        .vehicle-option.selected { border-color: var(--accent); background: rgba(225, 115, 6, 0.04); }
+        .vehicle-left { display: flex; align-items: center; gap: 12px; }
+        .vehicle-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 16px; color: var(--accent); }
+        .vehicle-info h5 { font-size: 13px; font-weight: 700; color: #fff; }
+        .vehicle-info p { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+        .vehicle-price { font-size: 14px; font-weight: 800; color: #fff; text-align: right; }
+
+        .summary-box { background: rgba(255,255,255,0.01); border: 1px dashed var(--border); padding: 14px; border-radius: 16px; margin-bottom: 15px; font-size: 13px; }
+        .summary-line { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--text-dim); }
+        .summary-line b { color: #fff; text-align: right; max-width: 65%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; margin-bottom: 15px; }
+        .pay-item {
+            background: #1b1b1f; border: 1px solid var(--border); padding: 12px; border-radius: 12px;
+            text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-dim);
+        }
+        .pay-item.selected { border-color: var(--accent); background: rgba(225,115,6,0.08); color: var(--accent); }
+
+        .fixed-actions-container {
+            padding: 12px 24px 18px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .bottom-actions { display: flex; gap: 10px; }
+        .btn-next { flex: 2; background: var(--accent-gradient); color: white; border: none; padding: 15px; border-radius: 16px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; }
+        .btn-back { flex: 1; background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 15px; border-radius: 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-next:active, .btn-back:active { opacity: 0.8; }
+        
+        .btn-sub-forfait { width: 100%; background: transparent; border: 1px dashed rgba(225,115,6,0.4); color: var(--accent); padding: 12px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+
+        .footer-nav { display: flex; justify-content: space-between; padding: 12px 24px 18px; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
+        .footer-nav a { color: var(--text-dim); text-decoration: none; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+        .footer-nav a:hover { color: var(--accent); }
+.btn-confirm {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+}
+.btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(225, 115, 6, 0.3);
+}
+.btn-confirm:disabled {
+    background: #27272a;
+    color: #a1a1aa;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+    <!-- ENTÊTE -->
+    <div class="app-header">
+        <div class="header-top">
+            <span class="brand">MBANZA EXPRESS</span>
+            <span class="wallet-badge" id="displaySolde">... FC</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar active" id="p1"></div>
+            <div class="progress-bar" id="p2"></div>
+            <div class="progress-bar" id="p3"></div>
+        </div>
+    </div>
+
+    <!-- WRAPPER DES ÉTAPES (SLIDES) -->
+    <div class="slides-wrapper" id="slidesWrapper">
+        
+        <!-- ÉTAPE 1 : CHOIX DU TRAJET -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Où allez-vous ?</h3>
+                <p class="subtitle">Renseignez les adresses pour votre déplacement</p>
+                
+                <div class="input-box">
+                    <div class="input-row">
+                        <i class="fas fa-circle-dot"></i>
+                        <input type="text" id="depart" list="listeLieux" placeholder="Lieu de départ..." autocomplete="off">
+                    </div>
+                    <div class="line-sep"></div>
+                    <div class="input-row">
+                        <i class="fas fa-location-dot"></i>
+                        <input type="text" id="dest" list="listeLieux" placeholder="Où allez-vous ?" autocomplete="off">
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-star" style="color: var(--accent); margin-right: 4px;"></i> Favoris Récents
+                    </div>
+                    <span id="btnEffacerFav" style="font-size: 10px; color: #ef4444; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 6px;">
+                        Réinitialiser
+                    </span>
+                </div>
+                
+                <div class="quick-grid" id="favorisGrid"></div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 2 : CHOIX DU VÉHICULE -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Moyen de Transport</h3>
+                <p class="subtitle">Sélectionnez la catégorie adaptée à vos besoins</p>
+                
+                <div class="price-hero">
+                    <span>Estimation pour votre trajet</span>
+                    <h4 id="prixEtape2">0 FC</h4>
+                    <div class="surge-badge" id="badgePointe" style="display:none;">⚡ Heure de pointe (+500 FC inclus)</div>
+                </div>
+
+                <div class="vehicle-list">
+                    <div class="vehicle-option selected" id="v1">
+                        <div class="vehicle-left">
+                            <div class="vehicle-icon"><i class="fas fa-motorcycle"></i></div>
+                            <div class="vehicle-info">
+                                <h5>MOTO STANDARD</h5>
+                                <p>Rapide, évite le trafic urbain</p>
+                            </div>
+                        </div>
+                        <div class="vehicle-price" id="prix_v1">0 FC</div>
+                    </div>
+                    
+                    <div class="vehicle-option" id="v2">
+                        <div class="vehicle-left">
+                            <div class="vehicle-icon"><i class="fas fa-car"></i></div>
+                            <div class="vehicle-info">
+                                <h5>VOITURE BERLINE</h5>
+                                <p>Confortable et climatisé</p>
+                            </div>
+                        </div>
+                        <div class="vehicle-price" id="prix_v2">0 FC</div>
+                    </div>
+
+                    <div class="vehicle-option" id="v3">
+                        <div class="vehicle-left">
+                            <div class="vehicle-icon"><i class="fas fa-truck-monster"></i></div>
+                            <div class="vehicle-info">
+                                <h5>FAMILLE / SUV</h5>
+                                <p>Spacieux, parfait pour bagages</p>
+                            </div>
+                        </div>
+                        <div class="vehicle-price" id="prix_v3">0 FC</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 3 : CONFIRMATION & PAIEMENT -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Finalisation</h3>
+                <p class="subtitle">Vérifiez les informations avant confirmation</p>
+                
+                <div class="summary-box">
+                    <div class="summary-line">Passager : <b id="sumNom">...</b></div>
+                    <div class="summary-line">Trajet : <b id="sumTrajet">...</b></div>
+                    <div class="summary-line">Catégorie : <b id="sumVehicule">...</b></div>
+                    <div class="summary-line">Net à payer : <b id="sumPrix" style="color:var(--green)">0 FC</b></div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <input type="text" id="nom" placeholder="Nom complet du passager" required style="padding: 0 14px; background:var(--input-bg); border:1px solid var(--border); border-radius:12px; height:45px; width:100%; color:white; outline:none; font-size:14px;">
+                    <input type="text" id="codeAbo" placeholder="Code secret Forfait (Optionnel, ex: MB-123)" style="padding: 0 14px; background:var(--input-bg); border:1px solid var(--border); border-radius:12px; height:45px; width:100%; color:white; outline:none; font-size:14px;">
+                </div>
+
+                <div style="font-size: 11px; font-weight:700; color:var(--text-dim); margin-top:14px; text-transform:uppercase; letter-spacing:0.5px;">Mode de règlement</div>
+                
+                <div class="pay-grid">
+                    <div class="pay-item selected" id="p_mbanza"><i class="fas fa-university"></i> Solde</div>
+                    <div class="pay-item" id="p_cash"><i class="fas fa-money-bill-wave"></i> Cash</div>
+                    <div class="pay-item" id="p_orange"><i class="fas fa-mobile-alt"></i> Orange</div>
+                    <div class="pay-item" id="p_mpesa"><i class="fas fa-wallet"></i> M-Pesa</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BLOC DES ACTIONS FIXES (TOUJOURS ANCRÉ EN BAS) -->
+    <div class="fixed-actions-container">
+        <!-- ACTIONS ÉTAPE 1 -->
+        <div class="bottom-actions" id="groupEtape1" style="display: flex;">
+            <button type="button" class="btn-next" id="btnEtape1Continuer">
+                CONTINUER <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- ACTIONS ÉTAPE 2 -->
+        <div class="bottom-actions" id="groupEtape2" style="display: none;">
+            <button type="button" class="btn-back" id="btnRetourEtape1"><i class="fas fa-arrow-left"></i></button>
+            <button type="button" class="btn-next" id="btnEtape2Continuer">CONTINUER</button>
+        </div>
+
+        <!-- ACTIONS ÉTAPE 3 -->
+        <div class="bottom-actions" id="groupEtape3" style="display: none; flex-direction: column; gap: 8px;">
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button type="button" class="btn-back" id="btnRetourEtape2"><i class="fas fa-arrow-left"></i></button>
+                <button type="button" class="btn-confirm" id="btnCommander"><i class="fas fa-paper-plane"></i> COMMANDER</button>
+            </div>
+            <button type="button" id="btnAbonnement" class="btn-sub-forfait"><i class="fas fa-id-card"></i> PASSER PAR MON ABONNEMENT TRAJETS</button>
+        </div>
+    </div>
+
+    <!-- NAVIGATION BASSE DE L'APP -->
+    <div class="footer-nav">
+        <a href="index.html"><i class="fas fa-home"></i> Menu Principal</a>
+        <a href="section compt client.html"><i class="fas fa-user-circle"></i> Mon Espace</a>
+    </div>
+</div>
+
+<datalist id="listeLieux"></datalist>
+    
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, updateDoc, increment, onSnapshot, query, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg", 
+        authDomain: "mbanza-express.firebaseapp.com", 
+        projectId: "mbanza-express", 
+        storageBucket: "mbanza-express.appspot.com", 
+        messagingSenderId: "182597244795", 
+        appId: "1:182597244795:web:3ba1dc36800db0374b4fde" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const userTel = localStorage.getItem('userTel');
+
+    let prixCourseBase = 0;
+    let multiplicateurVehicule = 1;
+    let nomVehiculeSelectionne = "MOTO STANDARD";
+    let typeVehiculeSelectionne = "1";
+    let modePaiementSelectionne = "Compte Mbanza";
+    let soldeClientActuel = 0;
+    const MAX_FAVORIS = 4;
+    let decalageHeureServeur = 0;
+    let configMajoration = { pluie: false, pointe: false };
+    let grilleTarifsTextuels = [];
+
+    if(!userTel) { 
+        alert("Session expirée. Veuillez vous reconnecter.");
+        window.location.href = "connexion.html"; 
+    }
+
+   
+    function chargerGrilleTarifaireDepuisFirestore() {
+        const datalist = document.getElementById('listeLieux');
+        if (!datalist) return;
+
+        onSnapshot(collection(db, "tarifs_urbains"), (querySnapshot) => {
+            grilleTarifsTextuels = []; 
+            datalist.innerHTML = ""; 
+            const lieuxUniques = new Set();
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                grilleTarifsTextuels.push({
+                    dep: data.depart,
+                    dest: data.destination,
+                    prix: parseInt(data.prix || 0)
+                });
+                if (data.depart) lieuxUniques.add(data.depart.trim());
+                if (data.destination) lieuxUniques.add(data.destination.trim());
+            });
+
+            lieuxUniques.forEach(lieu => {
+                const option = document.createElement('option');
+                option.value = lieu;
+                datalist.appendChild(option);
+            });
+            calculerTarif();
+        }, (error) => {
+            console.error("Erreur Firestore tarifs :", error);
+        });
+    }
+
+    async function chargerDonneesProfil() {
+        try {
+            const userSnap = await getDoc(doc(db, "utilisateurs", userTel));
+            if (userSnap.exists()) {
+                const data = userSnap.data();
+                soldeClientActuel = data.solde_trajets || 0;
+                document.getElementById('displaySolde').innerText = `${soldeClientActuel.toLocaleString('fr-FR')} FC`;
+                document.getElementById('nom').value = data.nom_complet || "";
+                            }
+        } catch (e) { console.error("Erreur profil :", e); }
+        chargerFavorisDansInterface();
+    }
+
+    async function synchroniserHeure() {
+        try {
+            const reponse = await fetch("https://worldtimeapi.org/api/timezone/Africa/Kinshasa");
+            const data = await reponse.json();
+            const heureServeur = new Date(data.datetime).getHours();
+            const heureLocale = new Date().getHours();
+            decalageHeureServeur = heureServeur - heureLocale;
+        } catch (e) {
+            console.warn("Utilisation heure locale par défaut.");
+        }
+    }
+
+    window.allerEtape = function(numEtape) {
+        if (numEtape === 2 || numEtape === 3) {
+            const dep = document.getElementById('depart').value.trim();
+            const dest = document.getElementById('dest').value.trim();
+            if(!dep || !dest) {
+                alert("⚠️ Saisissez d'abord votre point de départ et votre destination.");
+                return;
+            }
+            calculerTarif();
+        }
+
+               const wrapper = document.getElementById('slidesWrapper');
+        if (wrapper) {
+            const pourcentage = (numEtape - 1) * -33.333;
+            wrapper.style.transform = `translateX(${pourcentage}%)`;
+        }
+
+        for (let i = 1; i <= 3; i++) {
+            const bar = document.getElementById(`p${i}`);
+            if (bar) bar.classList.toggle('active', i <= numEtape);
+        }
+
+        const g1 = document.getElementById('groupEtape1');
+        const g2 = document.getElementById('groupEtape2');
+        const g3 = document.getElementById('groupEtape3');
+
+        if(g1) g1.style.setProperty('display', numEtape === 1 ? 'flex' : 'none', 'important');
+        if(g2) g2.style.setProperty('display', numEtape === 2 ? 'flex' : 'none', 'important');
+        if(g3) g3.style.setProperty('display', numEtape === 3 ? 'flex' : 'none', 'important');
+
+        if (numEtape === 3) {
+            const finalPrice = prixCourseBase * multiplicateurVehicule;
+            document.getElementById('sumNom').innerText = document.getElementById('nom').value || "Non spécifié";
+            document.getElementById('sumTrajet').innerText = `${document.getElementById('depart').value} ➔ ${document.getElementById('dest').value}`;
+            document.getElementById('sumVehicule').innerText = nomVehiculeSelectionne;
+            document.getElementById('sumPrix').innerText = `${finalPrice.toLocaleString('fr-FR')} FC`;
+        }
+    }
+
+    function initialiserPage() {
+        
+        window.allerEtape(1);
+        
+        synchroniserHeure().then(() => {
+            chargerDonneesProfil();
+            chargerGrilleTarifaireDepuisFirestore();
+        });
+        
+        onSnapshot(doc(db, "configuration", "parametres"), (doc) => {
+            if (doc.exists()) {
+                configMajoration = doc.data();
+                calculerTarif(); 
+            }
+        });
+    }
+
+    if (document.readyState === "interactive" || document.readyState === "complete") {
+        initialiserPage();
+    } else {
+        document.addEventListener("DOMContentLoaded", initialiserPage);
+    }
+
+    function chargerFavorisDansInterface() {
+        const grille = document.getElementById('favorisGrid');
+        if (!grille) return;
+
+        let favorisPersonnalises = JSON.parse(localStorage.getItem('mbanza_favoris')) || [];
+
+        if (favorisPersonnalises.length > 0) {
+            afficherTrajetsDansGrille(favorisPersonnalises, grille);
+        } else {
+            grille.innerHTML = "<div style='color: #a1a1aa; padding: 10px; font-size: 13px;'>Suggestions... ⏳</div>";
+            const q = query(collection(db, "tarifs_urbains"), limit(MAX_FAVORIS));
+            
+            getDocs(q).then((querySnapshot) => {
+                let trajetsParDefaut = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    trajetsParDefaut.push({ depart: data.depart, dest: data.destination });
+                });
+
+                if (trajetsParDefaut.length > 0) {
+                    afficherTrajetsDansGrille(trajetsParDefaut, grille);
+                } else {
+                    const secours = [
+                        { depart: "Université Kongo", dest: "Centre-ville" },
+                        { depart: "Gare de Mbanza", dest: "Marché Central" }
+                    ];
+                    afficherTrajetsDansGrille(secours, grille);
+                }
+            }).catch(() => {});
+        }
+    }
+
+    function afficherTrajetsDansGrille(listeTrajets, conteneur) {
+        conteneur.innerHTML = ""; 
+        listeTrajets.forEach(fav => {
+            const card = document.createElement('div');
+            card.className = 'quick-card';
+            const departTxt = fav.depart || "";
+            const destTxt = fav.dest || fav.destination || "";
+
+            const labelCoupe = destTxt && destTxt.length > 15 ? destTxt.substring(0, 14) + '.' : (destTxt || "Non spécifié");
+            const depCoupe = departTxt && departTxt.length > 15 ? departTxt.substring(0, 14) + '.' : (departTxt || "Non spécifié");
+
+            card.innerHTML = `<div>Vers ${labelCoupe}</div><b>${depCoupe}</b>`;
+            card.addEventListener('click', () => {
+                document.getElementById('depart').value = departTxt;
+                document.getElementById('dest').value = destTxt;
+                calculerTarif();
+                window.allerEtape(2);
+            });
+            conteneur.appendChild(card);
+        });
+    }
+
+    function sauvegarderNouveauFavori(depart, dest) {
+        if(!depart || !dest) return;
+        let favoris = JSON.parse(localStorage.getItem('mbanza_favoris')) || [];
+        const existeDeja = favoris.some(fav => 
+            fav.depart.toLowerCase() === depart.toLowerCase() && fav.dest.toLowerCase() === dest.toLowerCase()
+        );
+
+        if (!existeDeja) {
+            favoris.unshift({ depart: depart, dest: dest });
+            if (favoris.length > MAX_FAVORIS) favoris.pop();
+            localStorage.setItem('mbanza_favoris', JSON.stringify(favoris));
+            chargerFavorisDansInterface();
+        }
+    }
+
+    document.getElementById('btnEffacerFav').addEventListener('click', () => {
+        if(confirm("Voulez-vous réinitialiser vos favoris récents ?")) {
+            localStorage.removeItem('mbanza_favoris');
+            chargerFavorisDansInterface();
+        }
+    });
+
+    async function calculerTarif() {
+        const dText = document.getElementById('depart').value.trim().toLowerCase();
+        const aText = document.getElementById('dest').value.trim().toLowerCase();
+        if(!dText || !aText) return;
+
+        const match = grilleTarifsTextuels.find(t => 
+            (t.dep.trim().toLowerCase() === dText && t.dest.trim().toLowerCase() === aText) ||
+            (t.dep.trim().toLowerCase() === aText && t.dest.trim().toLowerCase() === dText)
+        );
+
+        let base = match ? match.prix : 1500; 
+        const heureReelle = new Date().getHours() + decalageHeureServeur;
+        const estHeurePointe = (heureReelle >= 7 && heureReelle <= 9) || (heureReelle >= 16 && heureReelle <= 19);
+        
+        const badge = document.getElementById('badgePointe');
+        if (estHeurePointe) {
+            base += 500;
+            if (badge) {
+                badge.style.display = 'inline-block';
+                badge.innerText = "Tarif heure de pointe (+500 FC)"; 
+            }
+        } else {
+            if (badge) badge.style.display = 'none';
+        }
+
+        prixCourseBase = base;
+        mettreAjourAffichagePrix();
+    }
+
+    function mettreAjourAffichagePrix() {
+        const total = prixCourseBase * multiplicateurVehicule;
+        const pEtape2 = document.getElementById('prixEtape2');
+        if (pEtape2) pEtape2.innerText = `${total.toLocaleString('fr-FR')} FC`;
+        
+        const pv1 = document.getElementById('prix_v1');
+        const pv2 = document.getElementById('prix_v2');
+        const pv3 = document.getElementById('prix_v3');
+        
+        if (pv1) pv1.innerText = `${(prixCourseBase * 1).toLocaleString('fr-FR')} FC`;
+        if (pv2) pv2.innerText = `${(prixCourseBase * 3).toLocaleString('fr-FR')} FC`;
+        if (pv3) pv3.innerText = `${(prixCourseBase * 5).toLocaleString('fr-FR')} FC`;
+    }
+
+    document.getElementById('btnEtape1Continuer').addEventListener('click', () => window.allerEtape(2));
+    document.getElementById('btnRetourEtape1').addEventListener('click', () => window.allerEtape(1));
+    document.getElementById('btnEtape2Continuer').addEventListener('click', () => window.allerEtape(3));
+    document.getElementById('btnRetourEtape2').addEventListener('click', () => window.allerEtape(2));
+
+    document.getElementById('depart').addEventListener('input', calculerTarif);
+    document.getElementById('dest').addEventListener('input', calculerTarif);
+
+    document.getElementById('v1').addEventListener('click', () => configurerVehicule('1', 1, 'MOTO STANDARD', 'v1'));
+    document.getElementById('v2').addEventListener('click', () => configurerVehicule('3', 3, 'VOITURE BERLINE', 'v2'));
+    document.getElementById('v3').addEventListener('click', () => configurerVehicule('5', 5, 'FAMILLE / SUV', 'v3'));
+
+    function configurerVehicule(valueStr, mult, nomVehicule, elementId) {
+        document.querySelectorAll('.vehicle-option').forEach(el => el.classList.remove('selected'));
+        document.getElementById(elementId).classList.add('selected');
+        typeVehiculeSelectionne = valueStr;
+        multiplicateurVehicule = mult;
+        nomVehiculeSelectionne = nomVehicule;
+        mettreAjourAffichagePrix();
+    }
+
+   const modes = [
+        { id: 'p_mbanza', label: 'Compte Mbanza' },
+        { id: 'p_cash', label: 'Espèces' },
+        { id: 'p_orange', label: 'Orange Money' },
+        { id: 'p_mpesa', label: 'M-Pesa' }
+    ];
+
+    modes.forEach(m => {
+        const el = document.getElementById(m.id);
+        if (el) {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.pay-item').forEach(item => item.classList.remove('selected'));
+                el.classList.add('selected');
+                modePaiementSelectionne = m.label;
+            });
+        }
+    });
+
+// =========================================================================
+// --- LOGIQUE 1 : COMMANDE STANDARD (COMPTE MBANZA / CASH / MOBILE MONEY) ---
+// =========================================================================
+document.getElementById('btnCommander').addEventListener('click', async (e) => {
+    e.preventDefault(); // Sécurité pour éviter tout rechargement de page
+
+    const nomPassager = document.getElementById('nom').value.trim();
+    const depVal = document.getElementById('depart').value.trim();
+    const destVal = document.getElementById('dest').value.trim();
+
+    // Validations de base des champs de texte
+    if (!nomPassager) return alert("❌ Veuillez renseigner le nom du passager.");
+    if (!depVal || !destVal) return alert("❌ Veuillez renseigner le départ et la destination.");
+
+    // Récupération en temps réel du calcul du prix global validé à l'étape 2
+    const prixFinal = prixCourseBase * multiplicateurVehicule;
+
+    const btn = document.getElementById('btnCommander');
+
+    try {
+        // Mode chargement visuel du bouton
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
+
+        // Connexion au document de l'utilisateur pour vérifier son solde
+        const userDocRef = doc(db, "utilisateurs", userTel);
+        const userSnap = await getDoc(userDocRef);
+
+        if (!userSnap.exists()) {
+            alert("❌ Erreur : Compte utilisateur introuvable.");
+            reinitialiserBoutons();
+            return;
+        }
+
+        const compteClient = userSnap.data();
+        const soldeDisponible = compteClient.solde_trajets || 0;
+
+        // --- SÉCURITÉ STRICTE SUR LE COMPTE MBANZA ---
+        if (modePaiementSelectionne === "Compte Mbanza") {
+            if (soldeDisponible < prixFinal) {
+                alert(`❌ Solde insuffisant ! Votre solde est de ${soldeDisponible.toLocaleString('fr-FR')} FC, mais la course coûte ${prixFinal.toLocaleString('fr-FR')} FC. Veuillez recharger votre compte.`);
+                reinitialiserBoutons();
+                return; // Bloque complètement l'écriture de la course
+            }
+
+            // Déduction immédiate du solde de l'utilisateur
+            await updateDoc(userDocRef, {
+                solde_trajets: soldeDisponible - prixFinal
+            });
+        }
+
+        // Génération automatique du code de sécurité à 4 chiffres
+        const codeSecours = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // Envoi dans la collection "courses" lue par l'espace chauffeur et client
+        await addDoc(collection(db, "courses"), {
+            client_nom: nomPassager,
+            client_tel: userTel,
+            depart: depVal,
+            destination: destVal,
+            prix: prixFinal,
+            paiement_mode: modePaiementSelectionne,
+            type_vehicule: nomVehiculeSelectionne, // Utilise la catégorie choisie (ex: MOTO STANDARD)
+            code_validation: codeSecours,
+            statut: "en_attente",
+            heure: serverTimestamp() // Heure du serveur Firebase
+        });
+
+        // Enregistrement automatique dans l'historique des favoris locaux
+        sauvegarderNouveauFavori(depVal, destVal);
+
+        alert(`🚀 Commande validée avec succès !\n🔑 CODE CHAUFFEUR : ${codeSecours}`);
+        
+        // Redirection instantanée vers le Dashboard client
+        window.location.href = "section compt client.html";
+
+    } catch (error) {
+        console.error("Détail de l'erreur Firebase :", error);
+        alert("❌ Impossible de valider la commande. Problème réseau ou configuration.");
+        reinitialiserBoutons();
+    }
+});
+
+// =========================================================================
+// --- LOGIQUE 2 : COMMANDE ABONNEMENT (SÉCURISÉE SANS TRAJETS NÉGATIFS) ---
+// =========================================================================
+document.getElementById('btnAbonnement').addEventListener('click', async () => {
+    // Importation à la volée de query/where/getDocs si non disponibles globalement
+    // (Inclus par sécurité pour éviter les crashs liés à la syntaxe d'import Firestore)
+    const { query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+
+    const codeSaisi = document.getElementById('codeAbo').value.trim();
+    const nomPassager = document.getElementById('nom').value.trim();
+    const depVal = document.getElementById('depart').value.trim();
+    const destVal = document.getElementById('dest').value.trim();
+    const btnAbo = document.getElementById('btnAbonnement');
+
+    if (!codeSaisi) return alert("⚠️ Entrez votre code secret Forfait !");
+    if (!nomPassager) return alert("❌ Veuillez renseigner le nom du passager.");
+    if (!depVal || !destVal) return alert("❌ Veuillez renseigner le trajet complet.");
+
+    try {
+        btnAbo.disabled = true;
+        btnAbo.innerText = "Analyse de votre code... ⏳";
+
+        const q = query(collection(db, "codes_abonnement"), where("code", "==", codeSaisi), where("utilise", "==", false));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+            const docAbo = snap.docs[0];
+            const dataAbo = docAbo.data();
+
+            if (dataAbo.proprietaire === userTel) {
+                const trajetsDispo = dataAbo.trajets_restants || 0;
+
+                // Verrou anti-triche : évite de descendre sous 0 trajet
+                if (trajetsDispo <= 0) {
+                    alert("❌ Forfait épuisé ! Il reste 0 trajet sur cet abonnement.");
+                    reinitialiserBoutons();
+                    return;
+                }
+
+                const reste = trajetsDispo - 1;
+
+                // 1. Mise à jour des données de l'abonnement
+                await updateDoc(doc(db, "codes_abonnement", docAbo.id), {
+                    trajets_restants: reste,
+                    utilise: reste <= 0 // Passe automatiquement à True si c'était le dernier trajet
+                });
+
+                const codeSecours = Math.floor(1000 + Math.random() * 9000).toString();
+
+                // 2. Création de la course liée à l'abonnement
+                await addDoc(collection(db, "courses"), {
+                    client_nom: nomPassager,
+                    client_tel: userTel,
+                    depart: depVal,
+                    destination: destVal,
+                    prix: 0,
+                    paiement_mode: `Abonnement (${codeSaisi})`,
+                    type_vehicule: nomVehiculeSelectionne,
+                    code_validation: codeSecours,
+                    statut: "en_attente",
+                    heure: serverTimestamp()
+                });
+
+                // Enregistrement automatique dans l'historique des favoris locaux
+                sauvegarderNouveauFavori(depVal, destVal);
+
+                alert(`✅ Course validée avec votre forfait !\n🔑 CODE CHAUFFEUR : ${codeSecours}`);
+                window.location.href = "section compt client.html";
+            } else {
+                alert("❌ Ce code d'abonnement ne vous appartient pas.");
+                reinitialiserBoutons();
+            }
+        } else {
+            alert("❌ Code invalide, expiré ou forfait totalement épuisé.");
+            reinitialiserBoutons();
+        }
+    } catch (e) {
+        console.error("Erreur Abonnement :", e);
+        alert("❌ Erreur technique lors de la vérification de l'abonnement.");
+        reinitialiserBoutons();
+    }
+});
+
+// =========================================================================
+// --- UTILITAIRES : RÉINITIALISATION ET ÉTATS DES BOUTONS ---
+// =========================================================================
+function reinitialiserBoutons() {
+    const btnCommander = document.getElementById('btnCommander');
+    const btnAbonnement = document.getElementById('btnAbonnement');
+
+    if (btnCommander) {
+        btnCommander.disabled = false;
+        btnCommander.innerHTML = `<i class="fas fa-paper-plane"></i> COMMANDER`;
+    }
+    if (btnAbonnement) {
+        btnAbonnement.disabled = false;
+        btnAbonnement.innerHTML = `<i class="fas fa-id-card"></i> PASSER PAR MON ABONNEMENT TRAJETS`;
+    }
+}
+</script>
+</body>
+</html>

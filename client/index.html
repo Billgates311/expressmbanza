@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mbanza Express | Client</title>
+<script>
+if(!localStorage.getItem('userTel')){window.location.href="connexion.html";}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{--bg:#050505;--card:#121212;--accent:#e17306;--text:#ffffff;--gray:#888;--border:#222;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);padding-bottom:50px;overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+
+/* CORRECTION DE L'ALIGNEMENT DU BOUTON QUITTER */
+nav{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.logo{font-size:1rem;font-weight:bold;color:white;text-decoration:none;}
+.logo span{color:var(--accent);}
+.logout-btn{background:#1a1a1a;border:1px solid var(--border);color:#ff4d4d;padding:6px 12px;border-radius:6px;font-size:8px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:0.2s;}
+.logout-btn:hover{background:#221111;}
+
+#promoBanner{display:none;background:var(--accent);color:black;text-align:center;padding:4px;font-weight:bold;font-size:10px;}
+.hero {
+    position: relative;
+    height: 25vh; /* Augmenté de 14vh à 25vh pour agrandir la zone de la photo */
+    width: 100%;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(5,5,5,1)), url('service3.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    border-radius: 30px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 10px; /* Un peu plus d'espace interne pour respirer */
+    flex-shrink: 0;
+}.hero h1{font-size:1.5rem;font-weight: 900;}
+.hero h1 span{color:var(--accent);}
+.hero p{font-size:0.8rem;color:#09d33c; font-weight: 900;}
+.btn-main{margin-top:6px;background:var(--accent);color:white;padding:4px 12px;border-radius:50px;text-decoration:none;font-weight:bold;text-transform:uppercase;font-size:15px;}
+.services-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px 4px;margin:-10px 16px 0;background:var(--card);border-radius:10px;border:1px solid var(--border);position:relative;z-index:10;flex-shrink:0;}
+.service-item{text-align:center;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.icon-circle{width:34px;height:34px;background:#1a1a1a;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;font-size:13px;color:var(--accent);border:1px solid #252525;}
+.service-item span{font-size:8px;font-weight:600;text-transform:uppercase;color:var(--gray);}
+.section-title{padding:4px 16px 2px;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--accent);flex-shrink:0;}
+.map-container {
+    margin: 0 10px;
+    border-radius: 100px;
+    overflow: hidden;
+    border: 10px solid var(--border);
+    flex-grow: 1;         /* ÉTEND LA CARTE pour occuper tout l'espace vide noir */
+    min-height: 100px;    /* Sécurité pour qu'elle garde une taille minimale */
+    margin-bottom: 4px;   /* Un petit espace propre avant le bas */
+}
+/* Style pour rendre les icônes des chauffeurs visibles et stables */
+        .custom-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            width: 30px !important;
+            height: 30px !important;
+            margin-left: -15px !important;
+            margin-top: -15px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+#map{height:100%;width:100%;}
+.wallet-bar{margin:4px 16px;padding:4px 12px;background:#1a1a1a;border-radius:10px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);flex-shrink:0;}
+.wallet-info h4{font-size:11px;color:var(--text);}
+.promo-scroll{display:flex;overflow-x:auto;gap:8px;padding:2px 16px 4px;scrollbar-width:none;perspective:1000px;flex-shrink:0;}
+
+/* OPTIMISATION DE L'ANIMATION 3D FLOTTAISON */
+.promo-card{min-width:150px;height:45px;border-radius:8px;padding:4px 8px;display:flex;flex-direction:column;justify-content:center;border:1px solid rgba(255,255,255,0.08);position:relative;transform-style:preserve-3d;will-change:transform;transition:transform 0.3s ease;box-shadow:0 4px 10px rgba(0,0,0,0.4);animation:float3D 4s infinite ease-in-out;}
+.promo-scroll a:nth-child(1) .promo-card{animation-delay:0s;}
+.promo-scroll a:nth-child(2) .promo-card{animation-delay:0.8s;}
+.promo-scroll a:nth-child(3) .promo-card{animation-delay:1.6s;}
+@keyframes float3D{0%,100%{transform:translateY(0px) rotateX(1deg) rotateY(-1deg) scale(1);}50%{transform:translateY(-2px) rotateX(-1deg) rotateY(1deg) scale(1.02);}}
+.promo-card h3{font-size:9px;text-transform:uppercase;transform:translateZ(15px);}
+.promo-card p{font-size:8px!important;color:#eee;transform:translateZ(10px);}
+.bg-mawelisa{background:linear-gradient(45deg,#e50e031f,#04a2b0);}
+.bg-vip{background:linear-gradient(45deg,#120101,#ff5e02);}
+.bg{background:linear-gradient(135deg,#9400d3,#23fc06);}
+.btn-mini-pulse{background:var(--text);color:#000;padding:2px 6px;border-radius:4px;font-size:8px;font-weight:800;width:fit-content;text-decoration:none;margin-top:2px;}
+
+/* DIAPORAMA DE PUBLICITÉS PRO : MINI BANDEAU ULTRA COMPACT */
+.ads-container {
+    margin: 4px 16px; 
+    height: 100px;          /* Hauteur globale stricte et mini */
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+#diaporama-container {
+    width: 100%;
+    height: 100%;          /* S'adapte parfaitement au conteneur parent */
+    position: relative;
+    overflow: hidden;
+}
+
+.ad-banner {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;     /* Empêche les images publicitaires de se déformer */
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.ad-banner.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ad-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ad-tag {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    background: rgba(225, 115, 6, 0.9);
+    color: white;
+    font-size: 6px;       /* Texte un poil plus petit pour matcher la mini barre */
+    padding: 1px 3px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    z-index: 10;
+}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:#0c0c0c;display:flex;justify-content:space-around;padding:4px 0;border-top:1px solid var(--border);z-index:1000;height:44px;}
+.nav-item{text-align:center;color:#666;text-decoration:none;font-size:8px;font-weight:600;}
+.nav-item.active{color:var(--accent);}
+.nav-item i{font-size:14px;display:block;margin-bottom:1px;}
+@keyframes pulse {
+    0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+    100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+/* NOTIFICATIONS FLOTTANTES */
+        #zoneNotifications {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 99999;
+            pointer-events: none;
+        }
+
+        .notif-item {
+            pointer-events: auto;
+            background: var(--accent);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.5s ease;
+            cursor: pointer;
+            margin-bottom: 10px;
+            overflow-wrap: break-word;    
+            word-break: break-all;        
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .notif-item span {
+            display: -webkit-box;
+            -line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .notif-fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: 0.4s;
+        }
+</style>
+</head>
+<body>
+ <div id="zoneNotifications"></div>
+<div id="promoBanner"></div>
+<nav>
+<a href="#" class="logo">MBANZA<span>EXPRESS</span></a>
+<button class="logout-btn" onclick="deconnexion()"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+</nav>
+<header class="hero">
+<h1 id="txtBienvenue">Mbanza <span>Express</span></h1>
+<p> Ponctualité→Proximité→Précision.</p>
+<a href="paiement.html" class="btn-main">Commander</a>
+</header>
+<section class="services-grid">
+<a href="section compt client.html" class="service-item"><div class="icon-circle"><i class="fas fa-user"></i></div><span>Profil</span></a>
+<a href="ABONNEMENT.html" class="service-item"><div class="icon-circle"><i class="fas fa-star"></i></div><span>Abonné</span></a>
+<a href="offres.html" class="service-item"><div class="icon-circle"><i class="fas fa-motorcycle"></i></div><span>Moto</span></a>
+<a href="paiement.html" class="service-item"><div class="icon-circle"><i class="fas fa-car"></i></div><span>Taxi</span></a>
+<a href="#" onclick="partagerApp()" class="service-item"><div class="icon-circle" style="border:1px solid var(--accent);background:rgba(243,156,18,0.1);"><i class="fas fa-gift"></i></div><span style="color:var(--accent);">Inviter</span></a>
+</section>
+<h2 class="section-title">Chauffeurs à proximité</h2>
+<div class="map-container"><div id="map"></div></div>
+</div>
+<div class="wallet-bar">
+<div class="wallet-info"><p style="font-size:8px;color:var(--gray);">SOLDE ACTUEL</p><h4 id="userSolde">---- FC</h4></div>
+<a href="offres.html" class="btn-mini-pulse" style="background:var(--accent);color:white;margin-top:0;padding:4px 8px;">RECHARGER</a>
+</div>
+<h2 class="section-title">OFFRES DU JOUR😍</h2>
+<div class="promo-scroll">
+<a href="offres.html" style="text-decoration:none;color:white;"><div class="promo-card bg-mawelisa"><h3>ETUDIANT 🎓</h3><p>-15% etudiant UK ayant sa carte d'etudiant</p></div></a>
+<a href="offres.html" style="text-decoration:none;color:white;"><div class="promo-card bg-vip"><h3>TRAVAILLEUR VIP</h3><p>Priorité absolue</p></div></a>
+<a href="offres.html" style="text-decoration:none;color:white;"><div class="promo-card bg"><h3>ENFANTS D'ABORD</h3><p>Sécurité max + 2 courses bonus</p></div></a>
+</div>
+<h2 class="section-title">🦋Actualités🦋</h2>
+<div class="ads-container" id="adsSlider">
+<div class="ad-banner active"><span class="ad-tag">Sponsorisé</span><img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400" alt="Pub"></div>
+<div class="ad-banner"><span class="ad-tag">Directeur Coach</span><img src="prof.jpeg" alt="Coach"></div>
+<div class="ad-banner"><span class="ad-tag">nos conducteurs</span><img src="taxii7.jpg" alt="Conducteurs"></div>
+<div class="ad-banner"><span class="ad-tag">nos Partenaires</span><img src="service2.png" alt="Partenaires"></div>
+<div class="ad-banner"><span class="ad-tag">nos clients</span><img src="taxi6.jpg" alt="Clients"></div>
+<div class="ad-banner"><span class="ad-tag">Le developpeur</span><img src="billgates.jpg" alt="Dev"></div>
+<div class="ad-banner"><span class="ad-tag">protection</span><img src="taxi8.jpg" alt="Protection"></div>
+<div class="ad-banner"><span class="ad-tag">Directeur personnel</span><img src="saintiche.jpg" alt="Personnel"></div>
+<div class="ad-banner"><span class="ad-tag">test d'experience</span><img src="taxi4.jpg" alt="Exp"></div>
+<div class="ad-banner"><span class="ad-tag">gestionnaire</span><img src="arounax.jpg" alt="Gestionnaire"></div>
+<div class="ad-banner"><span class="ad-tag">Nos partenaires</span><img src="ISP.PNG" alt="ISP"></div>
+</div>
+<nav class="bottom-nav">
+<a href="index.html" class="nav-item active"><i class="fas fa-home"></i> ACCUEIL</a>
+<a href="offres.html" class="nav-item"><i class="fas fa-tags"></i> OFFRES</a>
+<a href="section compt client.html" class="nav-item"><i class="fas fa-user-circle"></i> PROFIL</a>
+<a href="aide.html" class="nav-item"><i class="fas fa-comments"></i>GUIDE</a>
+</nav>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+import { doc, onSnapshot, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db } from './CONFIGURATION OFFICIELLE MBANZA EX.js';
+// --- 1. INITIALISATION DE LA CARTE ---
+var map = L.map('map', { zoomControl: false }).setView([-5.2583, 14.8611], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// --- 2. CONFIGURATION DES ICÔNES ---
+var motoIcon = L.divIcon({ className: 'custom-marker', html: '<i class="fas fa-motorcycle" style="color:#e67e22;font-size:16px;"></i>' });
+
+var clientIcon = L.divIcon({
+    className: 'custom-client-marker',
+    html: '<div style="background-color: #2563eb; width: 14px; height: 14px; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(37,99,235,0.8); animation: pulse 1.5s infinite;"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+});
+
+// --- 3. VARIABLES DE SUIVI ET CONFIGURATION ---
+var markers = {};
+var clientMarker = null;
+// --- 4. AFFICHAGE DES CHAUFFEURS EN TEMPS RÉEL (FIREBASE) ---
+const qChauffeurs = query(collection(db, "chauffeurs"), where("en_service", "==", true));
+onSnapshot(qChauffeurs, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+        const data = change.doc.data();
+        const id = change.doc.id;
+        if (change.type === "added" || change.type === "modified") {
+            if (markers[id]) { 
+                markers[id].setLatLng([data.lat, data.lng]); 
+            } else { 
+                markers[id] = L.marker([data.lat, data.lng], { icon: motoIcon }).addTo(map); 
+            }
+        }
+        if (change.type === "removed" && markers[id]) {
+            map.removeLayer(markers[id]);
+            delete markers[id];
+        }
+    });
+});
+
+// --- 5. GÉOLOCALISATION DU CLIENT COMPATIBLE NAVIGATION ---
+var premierCentrageReussi = false; // Permet de bloquer le recentrage forcé après le premier coup
+
+map.on('locationfound', (e) => {
+    localStorage.setItem('clientLat', e.latlng.lat);
+    localStorage.setItem('clientLng', e.latlng.lng);
+    
+    // Mise à jour ou création du marqueur bleu du client
+    if (clientMarker) {
+        clientMarker.setLatLng(e.latlng);
+    } else {
+        clientMarker = L.marker(e.latlng, { icon: clientIcon })
+            .addTo(map)
+            .bindPopup("<b>Vous êtes ici</b>")
+            .openPopup();
+    }
+    
+    // 🚀 LA CORRECTION EST ICI : On ne centre la carte sur le client QUE la première fois
+    if (!premierCentrageReussi) {
+        map.setView(e.latlng, 15); // Centre la carte au zoom 15
+        premierCentrageReussi = true; // On verrouille pour les prochaines mises à jour GPS
+    }
+});
+
+map.on('locationerror', (e) => {
+    console.log("Erreur GPS : " + e.message);
+    map.setView([-5.2583, 14.8611], 15); 
+    alert("Veuillez activer le GPS de votre téléphone pour voir votre position et les chauffeurs à proximité !");
+});
+
+// 🟢 CORRECTION : On garde 'watch: true' pour suivre le client, mais on passe 'setView: false' pour ne pas bloquer l'écran !
+map.locate({ setView: false, watch: true, enableHighAccuracy: true });
+
+
+const userTel = localStorage.getItem('userTel');
+if(userTel){
+    onSnapshot(doc(db,"configuration","globale"),(docSnap)=>{
+        if(docSnap.exists()){
+            const data = docSnap.data();
+            const promoBanner = document.getElementById('promoBanner');
+            if(promoBanner){
+                if(data.alerte_active){
+                    promoBanner.innerText=data.message_alerte;
+                    promoBanner.style.display='block';
+                }else{
+                    promoBanner.style.display='none';
+                }
+            }
+            const heroSection = document.querySelector('.hero');
+            if(heroSection && data.photo_hero_url){
+                heroSection.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4),rgba(5,5,5,1)), url('${data.photo_hero_url}')`;
+            }
+        }
+    });
+
+    onSnapshot(doc(db, "configuration", "bouton_moto"), (docSnap) => {
+        if(docSnap.exists()){
+            const data = docSnap.data();
+            const btnMoto = document.querySelector('.services-grid a[href="offres.html"]');
+            if(btnMoto){
+                if(data.nom) btnMoto.querySelector('span').innerText = data.nom;
+                if(data.lien) btnMoto.setAttribute('href', data.lien);
+            }
+        }
+    });
+    onSnapshot(collection(db, "galerie_photos"), (snapshot) => {
+        const sliderContainer = document.getElementById('adsSlider');
+        if(sliderContainer){
+            let html = "";
+            let idx = 0;
+            snapshot.forEach((docSub) => {
+                const photo = docSub.data();
+                if(photo.categorie === 'actualite' || photo.categorie === 'Bannières'){
+                    html += `
+                    <div class="ad-banner ${idx === 0 ? 'active' : ''}">
+                        <span class="ad-tag">${photo.titre || 'Actualité'}</span>
+                        <img src="${photo.url}" alt="Mbanza Express Actu">
+                    </div>`;
+                    idx++;
+                }
+            });
+            if(html !== "") {
+                sliderContainer.innerHTML = html;
+                recommencerDiaporama();
+            }
+        }
+    });
+
+    onSnapshot(collection(db, "offres_accueil"), (snapshot) => {
+        const promoScroll = document.querySelector('.promo-scroll');
+        if(promoScroll){
+            let html = "";
+            snapshot.forEach((docSub) => {
+                const o = docSub.data();
+                if(o.visible !== false) {
+                    html += `
+                    <a href="${o.lien || 'offres.html'}" style="text-decoration:none;color:white;">
+                        <div class="promo-card" style="background: ${o.couleur_arriere_plan || 'linear-gradient(45deg, #222, #333)'};">
+                            <h3>${o.titre}</h3>
+                            <p>${o.description}</p>
+                            ${o.texte_bouton ? `<span class="btn-mini-pulse" style="margin-top:2px; display:inline-block;">${o.texte_bouton}</span>` : ''}
+                        </div>
+                    </a>`;
+                }
+            });
+            if(html !== "") {
+                promoScroll.innerHTML = html;
+                appliquerEffet3D();
+            }
+        }
+    });
+
+    onSnapshot(doc(db,"utilisateurs",userTel),(docSnap)=>{
+        if(docSnap.exists()){
+            const userData=docSnap.data();
+            const soldeElement=document.getElementById('userSolde');
+            if(soldeElement){soldeElement.innerText=(userData.solde_trajets || 0)+"FC";}
+            if (userData.nom_complet) {
+    const prenom = userData.nom_complet.split(' ')[0];
+    const dejaVisite = localStorage.getItem('mbanza_premier_accueil');
+    const titreElement = document.getElementById('txtBienvenue');
+    
+    if (titreElement) {
+        if (!dejaVisite) {
+            // Premier accueil de la session
+            titreElement.innerHTML = `Bienvenue, <span>${prenom}</span> !`;
+            localStorage.setItem('mbanza_premier_accueil', 'true');
+        } else {
+            // Accueils suivants selon l'heure
+            const heure = new Date().getHours();
+            let salutation = "";
+
+            if (heure >= 5 && heure < 10) {
+                salutation = "Bonjour";
+            } else if (heure >= 10 && heure < 12) {
+                salutation = "Bon avant-midi";
+            } else if (heure >= 12 && heure < 18) {
+                salutation = "Bon après-midi";
+            } else {
+                salutation = "Bonsoir";
+            }
+
+            titreElement.innerHTML = `${salutation}, <span>${prenom}</span> !`;
+        }
+    }
+} else {
+    // Si le document utilisateur n'existe pas dans la DB
+    localStorage.removeItem('userTel');
+    window.location.href = "connexion.html";
+}
+}
+    }); 
+} else {
+    // Si aucun numéro n'est trouvé dans le localStorage au départ
+    window.location.href = "connexion.html";
+}
+
+window.deconnexion=function(){if(confirm("Se déconnecter ?")){localStorage.removeItem('userTel');localStorage.removeItem('mbanza_premier_accueil');window.location.href="connexion.html";}};
+window.partagerApp=()=>{
+    const lienInvitation=`https://mbanza-express.com/inscription.html?ref=${userTel||''}`;
+    if(navigator.share){navigator.share({title:'Mbanza Express 🚕',text:'Le transport intelligent rapide !',url:lienInvitation});}
+    else{navigator.clipboard.writeText(lienInvitation);alert("Lien copié !");}
+};
+
+let diaporamaInterval;
+function recommencerDiaporama(){
+    clearInterval(diaporamaInterval);
+    const banners = document.querySelectorAll('.ad-banner');
+    let currentAdIndex = 0;
+    if(banners.length > 1){
+        diaporamaInterval = setInterval(()=>{
+            banners[currentAdIndex].classList.remove('active');
+            currentAdIndex = (currentAdIndex + 1) % banners.length;
+            banners[currentAdIndex].classList.add('active');
+        }, 4000); 
+    }
+}
+
+function appliquerEffet3D(){
+    const cards = document.querySelectorAll('.promo-card');
+    cards.forEach(card=>{
+        card.addEventListener('mousemove',(e)=>{
+            card.style.animation='none';
+            const cardRect=card.getBoundingClientRect();
+            const mouseX=e.clientX-(cardRect.left+cardRect.width/2);
+            const mouseY=e.clientY-(cardRect.top+cardRect.height/2);
+            card.style.transform=`rotateX(${(-mouseY/(cardRect.height/2))*12}deg) rotateY(${(mouseX/(cardRect.width/2))*12}deg) scale(1.03)`;
+        });
+        card.addEventListener('mouseleave',()=>{
+            card.style.transition='transform 0.4s ease';
+            card.style.transform='rotateX(0deg) rotateY(0deg) scale(1)';
+            setTimeout(()=>{card.style.transition='transform 0.2s ease';card.style.animation='float3D 4s infinite ease-in-out';},400);
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+    recommencerDiaporama();
+    appliquerEffet3D();
+});
+// =========================================================================
+// --- SYSTÈME DE NOTIFICATION EN CHAÎNE SANS BLOCAGE (SANS F5) ---
+// =========================================================================
+
+// Initialisation unique des variables sur l'objet global window
+if (!window.fileAttenteNotifs) window.fileAttenteNotifs = [];
+window.notificationEnCoursDaffichage = false;
+
+// Fonction globale pour copier le code d'abonnement
+window.copierCodeNotif = function(code, btn) {
+    navigator.clipboard.writeText(code).then(() => {
+        btn.style.background = "#2ecc71";
+        btn.style.color = "#ffffff";
+        btn.innerHTML = `<i class="fas fa-check"></i> COPIÉ !`;
+        setTimeout(() => {
+            btn.style.background = "#ffffff";
+            btn.style.color = "#e17306";
+            btn.innerHTML = `<i class="fas fa-copy"></i> COPIER`;
+        }, 2000);
+    }).catch(err => console.error("Erreur copie :", err));
+};
+
+// Fonction globale de fermeture : efface le pop-up et lance DIRECTEMENT le suivant
+window.fermerNotifPro = async function(docId) {
+    const box = document.getElementById(`notif-${docId}`);
+    if (box) {
+        box.style.transform = 'translateY(-20px)';
+        box.style.opacity = '0';
+        box.style.transition = '0.3s ease';
+        setTimeout(() => { 
+            box.remove(); 
+            
+            // 🚀 LIBÉRATION IMMÉDIATE : On débloque le verrou et on force le traitement de la suite !
+            window.notificationEnCoursDaffichage = false;
+            window.traiterFileAttenteNotif();
+        }, 300);
+    }
+
+    // On met à jour Firestore pour que la notification passe à lu
+    try {
+        await updateDoc(doc(db, "notifications_privees", docId), { lu: true });
+    } catch (e) {
+        console.error("Erreur lors du passage à lu: true :", e);
+    }
+};
+
+// Le moteur automatique qui affiche les notifications une par une
+window.traiterFileAttenteNotif = function() {
+    // Si une alerte est déjà affichée à l'écran, on stoppe pour ne pas mélanger
+    if (window.notificationEnCoursDaffichage) return;
+    
+    // Si la file d'attente est vide, on s'arrête
+    if (window.fileAttenteNotifs.length === 0) return;
+
+    // Récupération ou création automatique de la zone de stockage des popups
+    let zoneNotif = document.getElementById('zoneNotifications');
+    if (!zoneNotif) {
+        zoneNotif = document.createElement('div');
+        zoneNotif.id = 'zoneNotifications';
+        zoneNotif.style.cssText = "position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 99999; pointer-events: none;";
+        document.body.appendChild(zoneNotif);
+    }
+
+    // On active le verrou et on retire la première notification du tableau
+    window.notificationEnCoursDaffichage = true;
+    const prochaineNotif = window.fileAttenteNotifs.shift(); 
+    const data = prochaineNotif.info;
+    const docId = prochaineNotif.id;
+
+    // Lancement du bip sonore
+    const audio = document.getElementById('notifSound');
+    if (audio) { 
+        audio.play().catch(e => console.log("Audio en attente d'interaction")); 
+    }
+
+    // Construction HTML du pop-up
+    const notifBox = document.createElement('div');
+    notifBox.id = "notif-" + docId;
+    notifBox.style.cssText = "pointer-events: auto; background: #e17306; color: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; position: relative; transition: all 0.3s ease; opacity: 0; transform: translateY(-20px); word-wrap: break-word; overflow-wrap: break-word;";
+
+    let htmlContenu = `
+        <div style="display: flex; align-items: center; gap: 10px; padding-right: 20px;">
+            <i class="fas fa-rocket" style="font-size: 20px;"></i>
+            <div style="flex: 1;">
+                <h4 style="margin: 0; font-size: 14px; font-weight: bold;">${data.titre || 'MBANZA EXPRESS 🚀'}</h4>
+                <p style="margin: 3px 0 0; font-size: 12px; opacity: 0.95; line-height: 1.3;">${data.message}</p>
+            </div>
+        </div>
+    `;
+
+    if (data.code) {
+        htmlContenu += `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; margin-top: 5px;">
+            <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 9px; opacity: 0.7; text-transform: uppercase;">Code Abonnement</span>
+                <strong style="font-size: 15px; color: #fff; letter-spacing: 1px;">${data.code}</strong>
+            </div>
+            <button onclick="window.copierCodeNotif('${data.code}', this)" style="background: #ffffff; color: #e17306; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <i class="fas fa-copy"></i> COPIER
+            </button>
+        </div>`;
+    }
+
+    htmlContenu += `
+        <div onclick="window.fermerNotifPro('${docId}')" style="position: absolute; top: 10px; right: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 16px;">
+            <i class="fas fa-times-circle"></i>
+        </div>
+    `;
+
+    notifBox.innerHTML = htmlContenu;
+    zoneNotif.appendChild(notifBox);
+
+    // Déclenchement de l'animation d'apparition
+    let rafraichissementForce = notifBox.offsetHeight; // Force le recalcul du layout pour l'animation CSS
+    notifBox.style.opacity = "1";
+    notifBox.style.transform = "translateY(0)";
+};
+
+// Écouteur Firebase en temps réel branché sur la file d'attente
+const monNumeroPourNotif = localStorage.getItem('userTel');
+if (monNumeroPourNotif) {
+    const qNotifs = query(
+        collection(db, "notifications_privees"),
+        where("destinataire", "==", monNumeroPourNotif),
+        where("lu", "==", false)
+    );
+
+    onSnapshot(qNotifs, (snapshot) => {
+        snapshot.forEach((docSnap) => {
+            const docId = docSnap.id;
+            const data = docSnap.data();
+
+            // Double sécurité anti-doublons
+            const existeDansFile = window.fileAttenteNotifs.some(item => item.id === docId);
+            const existeDansDOM = document.getElementById("notif-" + docId);
+
+            if (!existeDansFile && !existeDansDOM) {
+                window.fileAttenteNotifs.push({ id: docId, info: data });
+            }
+        });
+
+        // Dès que Firebase pousse une modification, on demande au moteur de lire la file
+        window.traiterFileAttenteNotif();
+    }, (error) => {
+        console.error("Erreur écouteur notifications :", error);
+    });
+}
+</script>
+</body>
+</html>

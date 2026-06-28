@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Connexion - Mbanza Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght=300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --accent: #e17306; 
+            --accent-dark: #d35400;
+            --bg: #000000; 
+            --surface: #111111;
+            --input-border: #222222;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+        }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'Outfit', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: ""; position: absolute; top: -10%; right: -10%; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(243, 156, 18, 0.15) 0%, transparent 70%);
+            z-index: -1;
+        }
+        
+        .login-card { 
+            background: var(--surface); 
+            padding: 35px 25px; 
+            border-radius: 30px; 
+            width: 100%; 
+            max-width: 380px; 
+            text-align: center; 
+            border: 1px solid var(--input-border); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .logo { font-size: 32px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: -1.5px; text-transform: uppercase; }
+        .logo span { color: var(--accent); }
+        .subtitle { color: var(--text-dim); font-size: 14px; margin-top: 5px; margin-bottom: 30px; }
+        
+        .input-group { position: relative; margin-bottom: 20px; }
+        
+        .field {
+            position: relative; display: flex; align-items: center;
+            background: #000; border: 1px solid var(--input-border); border-radius: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .field:focus-within { border-color: var(--accent); box-shadow: 0 0 15px rgba(243, 156, 18, 0.1); }
+        
+        .field i { padding: 0 15px; color: #444; font-size: 18px; }
+        
+        input, select { 
+            width: 100%; padding: 16px 15px 16px 0; background: transparent; 
+            border: none; color: white; font-size: 16px; font-family: inherit; outline: none; 
+        }
+        
+        .toggle-password { position: absolute; right: 15px; left: auto !important; cursor: pointer; color: var(--accent) !important; }
+        
+        .btn-login { 
+            width: 100%; padding: 20px; background: var(--accent); color: black; 
+            border: none; border-radius: 20px; font-size: 16px; font-weight: 800; 
+            cursor: pointer; margin-top: 15px; transition: all 0.3s ease; 
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.2);
+        }
+        
+        .btn-login:hover { background: var(--accent-dark); }
+        .btn-login:active { transform: scale(0.97); }
+        .btn-login:disabled { background: #222; color: #555; box-shadow: none; cursor: not-allowed; }
+        
+        .links { margin-top: 25px; font-size: 14px; display: flex; flex-direction: column; gap: 12px; }
+        .links a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .links a:hover { text-decoration: underline; }
+        
+        .hint { font-size: 10px; color: #444; margin-top: 6px; display: flex; align-items: center; gap: 5px; text-align: left; padding-left: 5px; }
+        
+        .back-home { display: inline-block; margin-top: 25px; color: var(--text-dim); text-decoration: none; font-size: 12px; opacity: 0.6; transition: opacity 0.2s; }
+        .back-home:hover { opacity: 1; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo">MBANZA <span>EXPRESS</span></div>
+    <p class="subtitle">Simplifiez vos déplacements en un seul clic avec votre smartphone</p>
+
+    <div class="input-group">
+        <div class="field">
+            <i class="fas fa-phone"></i>
+            <input type="tel" id="loginTel" placeholder="084 429 0421" maxlength="15">
+        </div>
+        <div class="hint"><i class="fas fa-check-circle"></i> Activation automatique du +243</div>
+    </div>
+    
+    <div class="input-group">
+        <div class="field">
+            <i class="fas fa-key"></i>
+            <input type="password" id="loginPin" maxlength="4" placeholder="Code PIN (4 chiffres)" inputmode="numeric">
+            <i class="fas fa-eye toggle-password" onclick="basculerPIN()"></i>
+        </div>
+    </div>
+
+    <button class="btn-login" id="btnConnexion" onclick="gererConnexion()">SE CONNECTER</button>
+    
+    <div class="links">
+        <span>Nouveau ici ? <a href="inscription.html">Créer un compte</a></span>
+        <a href="recuperation.html" style="color: #666; font-size: 12px; font-weight: normal;">
+            <i class="fas fa-unlock-alt"></i> Code PIN oublié ?
+        </a>
+    </div>
+
+    <a href="index.html" class="back-home">← Retourner à l'accueil</a>
+</div>
+    
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg",
+        authDomain: "mbanza-express.firebaseapp.com",
+        projectId: "mbanza-express",
+        storageBucket: "mbanza-express.firebasestorage.app",
+        messagingSenderId: "182597244795",
+        appId: "1:182597244795:web:3ba1dc36800db0374b4fde"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.gererConnexion = async function() {
+        const telSaisi = document.getElementById('loginTel').value.trim();
+        const pinSaisi = document.getElementById('loginPin').value.trim();
+        const btn = document.getElementById('btnConnexion');
+
+        if (!telSaisi || !pinSaisi) {
+            alert("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        // --- FORMATAGE AUTOMATIQUE DU +243 ---
+        let telFormate = telSaisi.replace(/\s+/g, ''); // Supprime les espaces
+        if (telFormate.startsWith('0')) {
+            telFormate = "+243" + telFormate.substring(1);
+        } else if (!telFormate.startsWith('+')) {
+            telFormate = "+243" + telFormate;
+        }
+
+        btn.innerText = "Vérification...";
+        btn.disabled = true;
+
+        try {
+            // Recherche du document utilisateur avec la clé "+243..."
+            const userRef = doc(db, "utilisateurs", telFormate);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+
+                // Comparaison avec le PIN enregistré
+                if (userData.mot_de_passe === pinSaisi) {
+                    localStorage.setItem('userTel', telFormate); // Sauvegarde globale au bon format
+                    alert("Connexion réussie ! Bienvenue sur Mbanza Express.");
+                    window.location.href = "index.html"; 
+                } else {
+                    alert("Code PIN incorrect.");
+                }
+            } else {
+                alert("Ce numéro n'est pas enregistré sur Mbanza Express.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erreur de connexion. Vérifiez votre connexion internet.");
+        } finally {
+            btn.innerText = "SE CONNECTER";
+            btn.disabled = false;
+        }
+    };
+
+    window.basculerPIN = function() {
+        const pinInput = document.getElementById('loginPin');
+        const icone = document.querySelector('.toggle-password');
+        if (pinInput.type === "password") {
+            pinInput.type = "text";
+            icone.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+            pinInput.type = "password";
+            icone.classList.replace("fa-eye-slash", "fa-eye");
+        }
+    };
+</script>
+
+</body>
+</html>

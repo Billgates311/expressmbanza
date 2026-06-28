@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mbanza Express | Conditions & Instructions d'Utilisation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #e17306; 
+            --primary-dark: #d35400;
+            --bg: #000000; 
+            --surface: #111111;
+            --surface-card: #161616;
+            --border: #222222;
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+        }
+
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; padding: 0;
+            line-height: 1.6;
+        }
+
+        /* En-tête de la page */
+        .header {
+            background: linear-gradient(180deg, rgba(225, 115, 6, 0.1) 0%, rgba(0,0,0,0) 100%);
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 15px;
+            color: var(--text-dim);
+            margin: 0;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Conteneur principal */
+        .main-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin: 30px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Liste des instructions en cartes */
+        .instruction-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .instruction-card:hover {
+            border-color: rgba(225, 115, 6, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .icon-box {
+            background: rgba(225, 115, 6, 0.1);
+            color: var(--primary);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .instruction-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .instruction-content p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        /* Tableau des sanctions de la Charte */
+        .charte-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .charte-table th, .charte-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .charte-table th {
+            background: #161616;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        /* Pied de page et Bouton Fermer */
+        .footer-area {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .btn-close {
+            background: var(--primary);
+            color: #000000;
+            border: none;
+            padding: 15px 35px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(225, 115, 6, 0.2);
+        }
+
+        .btn-close:hover {
+            background: var(--primary-dark);
+            transform: scale(1.02);
+        }
+
+        .company-note {
+            font-size: 12px;
+            color: #444;
+            margin-top: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Mbanza Express</h1>
+        <p>Instructions officielles et conditions obligatoires pour l'accès aux services de transport.</p>
+    </div>
+
+    <div class="main-container">
+
+        <div class="section-title">
+            <i class="fas fa-list-check"></i> 5 Conditions préalables au voyage
+        </div>
+
+        <div class="instruction-card">
+            <div class="icon-box"><i class="fas fa-mobile-alt"></i></div>
+            <div class="instruction-content">
+                <h3>1. Identité Mobile Unique</h3>
+                <p>Votre compte client reste lié de manière exclusive à votre numéro de téléphone. Il est strictement personnel et sert de passerelle pour l'authentification et l'interaction avec l'application.</p>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <div class="icon-box"><i class="fas fa-lock"></i></div>
+            <div class="instruction-content">
+                <h3>2. Confidentialité du Code PIN</h3>
+                <p>Le code d'accès à 4 chiffres configuré lors de votre inscription sécurise vos données et vos transactions. Ne partagez jamais votre code PIN avec une tierce personne ou un chauffeur.</p>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <div class="icon-box"><i class="fas fa-wallet"></i></div>
+            <div class="instruction-content">
+                <h3>3. Provisionnement Obligatoire</h3>
+                <p>Avant d'initier ou de commander une course, vous devez vous assurer de posséder un solde Mobile Money (M-Pesa, Orange Money) suffisant ou détenir un compte d'abonnement étudiant / VIP actif avec des trajets disponibles.</p>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <div class="icon-box"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="instruction-content">
+                <h3>4. Activation du Service GPS</h3>
+                <p>Pour permettre la mise en relation automatique avec le chauffeur disponible le plus proche de votre quartier à Mbanza-Ngungu, vous devez impérativement autoriser l'application à accéder à la position de votre smartphone.</p>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <div class="icon-box"><i class="fas fa-qrcode"></i></div>
+            <div class="instruction-content">
+                <h3>5. Sécurisation de la Validation (QR Code)</h3>
+                <p>Le paiement ou la déduction du trajet ne s'effectue qu'à la fin de la course. **Ne présentez votre QR Code au scanner du chauffeur qu'une fois arrivé à votre destination exacte** pour valider le service.</p>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <i class="fas fa-handshake"></i> Charte de respect et civisme
+        </div>
+
+        <div class="instruction-card" style="border-left: 4px solid var(--primary); margin-bottom: 5px;">
+            <div class="icon-box"><i class="fas fa-user-shield"></i></div>
+            <div class="instruction-content">
+                <h3>6. Respect absolu du Chauffeur et du Matériel</h3>
+                <p>La courtoisie est la règle d'or sur notre réseau. Les clients doivent obligatoirement adopter un comportement digne, poli et respectueux envers les conducteurs. De plus, toute dégradation volontaire du véhicule, de la moto ou des équipements de sécurité (comme le casque fourni) est interdite.</p>
+            </div>
+        </div>
+
+        <table class="charte-table">
+            <thead>
+                <tr>
+                    <th>Infraction commise</th>
+                    <th>Sanction appliquée</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Commande fictive ou fausse adresse répétée</td>
+                    <td><span class="badge-danger">Avertissement & Suspension</span></td>
+                </tr>
+                <tr>
+                    <td>Insulte, agressivité ou manque de respect envers le chauffeur</td>
+                    <td><span class="badge-danger">Exclusion définitive</span></td>
+                </tr>
+                <tr>
+                    <td>Détérioration volontaire du matériel de transport</td>
+                    <td><span class="badge-danger">Blocage + Poursuites</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer-area">
+      <button class="btn-close" onclick="window.location.href='inscription.html';">
+    J'AI COMPRIS, FERMER
+</button>
+            <div class="company-note">Direction Administrative | Mbanza Express </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

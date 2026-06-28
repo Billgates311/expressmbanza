@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mbanza Express | Inscription Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght=300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #e17306; 
+            --primary-dark: #d35400;
+            --bg: #000000; 
+            --surface: #111111;
+            --input-border: #222222;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+        }
+
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: ""; position: absolute; top: -10%; right: -10%; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(243, 156, 18, 0.15) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%; max-width: 400px; padding: 25px;
+            box-sizing: border-box; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo-area { text-align: center; margin-bottom: 40px; }
+        .logo-area h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-transform: uppercase; }
+        .logo-area span { color: var(--primary); }
+        .logo-area p { color: var(--text-dim); font-size: 14px; margin-top: 5px; }
+
+        .form-section { background: var(--surface); padding: 25px; border-radius: 30px; border: 1px solid var(--input-border); }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+
+        .field {
+            position: relative; display: flex; align-items: center;
+            background: #000; border: 1px solid var(--input-border); border-radius: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .field:focus-within { border-color: var(--primary); box-shadow: 0 0 15px rgba(243, 156, 18, 0.1); }
+
+        .field i { padding: 0 15px; color: #444; font-size: 18px; }
+        .field input, .field select {
+            background: transparent; border: none; color: white; padding: 16px 15px 16px 0;
+            width: 100%; font-size: 16px; font-family: inherit; outline: none;
+        }
+
+        .field select { appearance: none; cursor: pointer; }
+
+        .toggle-password { color: var(--primary) !important; cursor: pointer; }
+
+        .hint { font-size: 10px; color: #444; margin-top: 6px; display: flex; align-items: center; gap: 5px; }
+
+        .conditions-zone {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 20px 0 10px 0;
+            padding: 12px;
+            background: rgba(225, 119, 6, 0.03);
+            border: 1px dashed rgba(225, 119, 6, 0.2);
+            border-radius: 16px;
+        }
+
+        .conditions-zone input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .conditions-text {
+            font-size: 12px;
+            color: #ccccff;
+            line-height: 1.5;
+        }
+
+        .btn-conditions-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 5px;
+            font-size: 12px;
+            transition: color 0.2s;
+        }
+
+        .btn-conditions-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .btn-main {
+            width: 100%; padding: 20px; background: var(--primary); color: black;
+            border: none; border-radius: 20px; font-size: 16px; font-weight: 800;
+            cursor: pointer; margin-top: 20px; transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.2);
+        }
+
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main:disabled { background: #222; color: #555; box-shadow: none; cursor: not-allowed; }
+
+        .footer { text-align: center; margin-top: 30px; }
+        .footer a { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 14px; }
+        .footer p { font-size: 13px; color: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo-area">
+        <h1 id="titrePrincipal">MBANZA <span>EXPRESS</span></h1>
+        <p>L'excellence du transport à portée de main</p>
+    </div>
+
+    <div class="form-section">
+        <div id="formulaireSaisie">
+            <div class="input-group">
+                <label>Propriétaire du compte</label>
+                <div class="field">
+                    <i class="fas fa-user-circle"></i>
+                    <input type="text" id="regNom" placeholder="Ex: Billgates Malolokua" maxlength="35">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Contact Mobile</label>
+                <div class="field">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="regTel" placeholder="084 429 0421" maxlength="15">
+                </div>
+                <div class="hint"><i class="fas fa-check-circle"></i> Activation automatique du +243</div>
+            </div>
+
+            <div class="input-group">
+                <label>Code Secret (PIN)</label>
+                <div class="field">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="regPin" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*">
+                    <i class="fas fa-eye toggle-password" id="eyeIcon"></i>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Sécurité & Parrainage</label>
+                <div class="field" style="margin-bottom: 10px;">
+                    <i class="fas fa-question-circle"></i>
+                    <select id="regQuestion">
+                        <option value="ecole">École primaire ?</option>
+                        <option value="surnom">Surnom d'enfance ?</option>
+                        <option value="ville">Ville de naissance ?</option>
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom: 10px;">
+                    <i class="fas fa-pen"></i>
+                    <input type="text" id="regReponse" placeholder="Réponse secrète" maxlength="30">
+                </div>
+                <div class="field">
+                    <i class="fas fa-user-friends"></i>
+                    <input type="tel" id="regParrain" placeholder="Code parrain (Optionnel)" maxlength="15">
+                </div>
+            </div>
+
+            <div class="conditions-zone">
+                <input type="checkbox" id="acceptConditions">
+                <div class="conditions-text">
+                    J'accepte les conditions d'utilisation, la charte de bonne conduite et m'engage à respecter le chauffeur ainsi que son matériel.<br>
+                    <a href="instruction.html" target="_blank" class="btn-conditions-link">
+                        <i class="fas fa-shield-alt"></i> Lire les conditions d'utilisation
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-main" id="btnAction">INSCRIPTION</button>
+    </div>
+
+    <div class="footer">
+        <p>Déjà parmi nous ? <a href="connexion.html">Se connecter</a></p>
+        <a href="index.html" style="opacity: 0.5; font-size: 11px;">← Retourner à l'accueil</a>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg",
+        authDomain: "mbanza-express.firebaseapp.com",
+        projectId: "mbanza-express",
+        storageBucket: "mbanza-express.firebasestorage.app",
+        messagingSenderId: "182597244795",
+        appId: "1:182597244795:web:3ba1dc36800db0374b4fde"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- LOGIQUE VISUELLE DU PIN ---
+    const eyeIcon = document.getElementById('eyeIcon');
+    const pinInput = document.getElementById('regPin');
+    eyeIcon.addEventListener('click', () => {
+        pinInput.type = pinInput.type === "password" ? "text" : "password";
+        eyeIcon.classList.toggle("fa-eye-slash");
+        eyeIcon.classList.toggle("fa-eye");
+    });
+
+    // --- CAPTURE AUTOMATIQUE DU LIEN DE PARRAINAGE ---
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+            document.getElementById('regParrain').value = ref.trim();
+        }
+    });
+
+    // --- SÉCURISATION DU FORMULAIRE ET ENREGISTREMENT ---
+    document.getElementById('btnAction').addEventListener('click', async () => {
+        const btn = document.getElementById('btnAction');
+        const telInput = document.getElementById('regTel').value.trim();
+        
+        if (!telInput) {
+            alert("Veuillez entrer un numéro de téléphone.");
+            return;
+        }
+
+        // Fonction de nettoyage et formatage strict au format international +243
+        let telFormate = telInput.replace(/\s+/g, '');
+        if (telFormate.startsWith('0')) {
+            telFormate = "+243" + telFormate.substring(1);
+        } else if (telFormate.startsWith('243') && !telFormate.startsWith('+')) {
+            telFormate = "+" + telFormate;
+        } else if (!telFormate.startsWith('+')) {
+            telFormate = "+243" + telFormate;
+        }
+
+        const acceptBox = document.getElementById('acceptConditions');
+        if (!acceptBox.checked) {
+            alert("⚠️ Vous devez accepter les conditions générales d'utilisation pour vous inscrire !");
+            return;
+        }
+
+        const nom = document.getElementById('regNom').value.trim();
+        const pin = document.getElementById('regPin').value.trim();
+        const question = document.getElementById('regQuestion').value;
+        const reponse = document.getElementById('regReponse').value.toLowerCase().trim();
+        let parrain = document.getElementById('regParrain').value.trim();
+
+        // Validation stricte des données entrées
+        if (!nom || pin.length !== 4 || isNaN(pin) || !reponse) {
+            alert("Veuillez remplir tous les champs correctement. Votre code secret doit comporter exactement 4 chiffres.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Création du compte...";
+
+        try {
+            // Étape 1 : Vérification d'existence préalable
+            const docRef = doc(db, "utilisateurs", telFormate);
+            const check = await getDoc(docRef);
+            
+            if (check.exists()) {
+                alert("Ce numéro est déjà associé à un compte Mbanza Express !");
+                btn.disabled = false;
+                btn.innerText = "INSCRIPTION";
+                return;
+            }
+
+            // Étape 2 : Formatage propre du parrain s'il existe
+            if (parrain) {
+                parrain = parrain.replace(/\s+/g, '');
+                if (parrain.startsWith('0')) parrain = "+243" + parrain.substring(1);
+                if (parrain.startsWith('243') && !parrain.startsWith('+')) parrain = "+" + parrain;
+                if (!parrain.startsWith('+')) parrain = "+243" + parrain;
+            } else {
+                parrain = null;
+            }
+
+            // Étape 3 : Écriture sécurisée avec forçage des structures numériques natives (anti-triche)
+            await setDoc(docRef, {
+                nom_complet: nom,
+                telephone: telFormate,
+                mot_de_passe: pin,
+                question_id: question,
+                reponse_secrete: reponse,
+                solde: 0,              // Forcé à 0 pour éviter l'injection de crédit initial via le navigateur
+                total_courses: 0,      // Forcé à 0
+                parraine_par: parrain,
+                date_inscription: serverTimestamp()
+            });
+
+            alert("Compte créé avec succès ! Bienvenue chez Mbanza Express.");
+            localStorage.setItem('userTel', telFormate);
+            
+            window.location.href = "index.html";
+
+        } catch (e) {
+            console.error("Détails de l'erreur Firebase :", e);
+            alert("Une erreur de communication avec le serveur est survenue. Veuillez réessayer.");
+            btn.disabled = false;
+            btn.innerText = "INSCRIPTION";
+        }
+    });
+</script>
+</body>
+</html>
