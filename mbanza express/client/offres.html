@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mbanza Express | Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --accent: #e17306;
+            --text-main: #ffffff;
+            --text-dim: #b3b3b3;
+            --gradient: linear-gradient(135deg, #882727 15%, #e17306 100%);
+            --border: #333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: var(--text-main); line-height: 1.4; }
+
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 5%; background: rgba(15, 15, 15, 0.95); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);
+        }
+        .logo { font-size: 20px; font-weight: bold; color: var(--accent); text-decoration: none; }
+        .logo span { color: white; }
+
+        .grid-services {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 8px;
+            padding: 15px 3%;
+        }
+        .card {
+            background: var(--card-bg); border-radius: 12px; padding: 12px 5px;
+            border: 1px solid var(--border); text-align: center;
+        }
+        .card i { font-size: 20px; color: var(--accent); margin-bottom: 5px; }
+        .card h3 { font-size: 11px; margin-bottom: 5px; }
+        .price-tag { font-size: 13px; font-weight: bold; margin-bottom: 8px; }
+
+        .btn-main { background: var(--gradient); color: white; border: none; padding: 7px; border-radius: 6px; font-weight: bold; width: 85%; cursor: pointer; font-size: 9px; }
+
+        .section-title { text-align: center; margin: 25px 0 10px; font-size: 16px; color: var(--accent); text-transform: uppercase; }
+        .album-container { padding: 0 8% 30px; }
+        .album-subtitle { font-size: 10px; color: var(--text-dim); margin: 5px 0 5px; border-left: 2px solid var(--accent); padding-left: 8px; }
+
+        /* DIAPORAMA */
+        .mini-album-grid {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: #161616;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            margin-bottom: 15px;
+        }
+        .mini-card {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            border: none;
+        }
+        .mini-card.active {
+            opacity: 1;
+            z-index: 2;
+        }
+        .mini-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        @media (max-width: 600px) {
+            .album-container { padding: 0 2% 15px; }
+            .mini-album-grid { height: 160px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">MBANZA <span>EXPRESS</span></a>
+        <a href="section compt client.html">
+            <i class="fas fa-user-circle" style="font-size: 20px;"></i>
+        </a>
+    </nav>
+
+    <div class="grid-services" id="grillePacksDynamique">
+        <div style="grid-column: span 3; text-align: center; padding: 20px; color: var(--text-dim);">
+            <i class="fas fa-spinner fa-spin" style="font-size: 20px; color: var(--accent);"></i>
+            <p style="font-size: 11px; margin-top: 5px;">Chargement des forfaits...</p>
+        </div>
+    </div>
+
+    <div class="album-container">
+        <h2 class="section-title">nos produits</h2>
+         
+        <p class="album-subtitle">🦋express🦋</p>
+        <div class="mini-album-grid" id="grid-vehicules">
+            <p style="position: absolute; width: 100%; top: 45%; font-size: 11px; color: var(--text-dim); text-align: center;">Chargement...</p>
+        </div>
+         
+        <a href="index.html" style="color:white; text-decoration:none; width: 100%; background: var(--gradient); border: none; padding: 18px; border-radius: 20px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; display: block; text-align: center;">← Retour à l'accueil</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg",
+            authDomain: "mbanza-express.firebaseapp.com",
+            projectId: "mbanza-express",
+            storageBucket: "mbanza-express.appspot.com",
+            messagingSenderId: "182597244795",
+            appId: "1:182597244795:web:3ba1dc36800db0374b4fde"
+        };
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
+
+        let timerVehicules = null;
+
+        function chargerPacksPremiumDynamiques() {
+            db.collection("packs_premium").onSnapshot((snapshot) => {
+                const grille = document.getElementById('grillePacksDynamique');
+                if (!grille) return;
+                grille.innerHTML = "";
+
+                if (snapshot.empty) {
+                    grille.innerHTML = `<p style="grid-column: span 3; text-align:center; font-size:11px; color:var(--text-dim);">Aucun forfait disponible.</p>`;
+                    return;
+                }
+
+                let packs = [];
+                snapshot.forEach((doc) => {
+                    packs.push(doc.data());
+                });
+
+                packs.sort((a, b) => parseFloat(a.prix || 0) - parseFloat(b.prix || 0));
+
+                packs.forEach((pack) => {
+                    const card = document.createElement('div');
+                    card.className = "card";
+                    card.innerHTML = `
+                        <i class="${pack.icone || 'fas fa-motorcycle'}"></i>
+                        <h3>${pack.nom}</h3>
+                        <div class="price-tag">${parseInt(pack.prix || 0).toLocaleString('fr-FR')} FC</div>
+                        <button class="btn-main" onclick="ouvrirRecharge('${pack.nom}', ${pack.prix})">RECHARGER</button>
+                    `;
+                    grille.appendChild(card);
+                });
+            }, (error) => {
+                console.error("Erreur packs:", error);
+                document.getElementById('grillePacksDynamique').innerHTML = `<p style="grid-column: span 3; text-align:center; font-size:11px; color:var(--text-dim);">Erreur de chargement des offres.</p>`;
+            });
+        }
+
+        function lancerFaireDefilerPhoto(gridId) {
+            const container = document.getElementById(gridId);
+            if (!container) return;
+
+            const slides = container.querySelectorAll('.mini-card');
+            if (slides.length <= 1) return;
+
+            let indexActuel = 0;
+
+            if (timerVehicules) clearInterval(timerVehicules);
+
+            timerVehicules = setInterval(() => {
+                if(slides[indexActuel]) slides[indexActuel].classList.remove('active');
+                indexActuel = (indexActuel + 1) % slides.length;
+                if(slides[indexActuel]) slides[indexActuel].classList.add('active');
+            }, 3000);
+        }
+
+        function chargerGaleriePhotosDynamique() {
+            db.collection("galerie_photos").onSnapshot((snapshot) => {
+                const gridVehicules = document.getElementById('grid-vehicules');
+                if(gridVehicules) gridVehicules.innerHTML = "";
+
+                let indexV = 0;
+
+                if (snapshot.empty) {
+                    if(gridVehicules) gridVehicules.innerHTML = "<p style='position:absolute; width:100%; top:45%; font-size:10px; color:var(--text-dim); text-align:center;'>Aucune image disponible.</p>";
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const photo = doc.data();
+                    const categorieNettoyee = photo.categorie ? photo.categorie.trim().toLowerCase() : "";
+
+                    if ((categorieNettoyee === "vehicules" || categorieNettoyee === "véhicules") && photo.url) {
+                        const activeClass = indexV === 0 ? 'active' : '';
+                        gridVehicules.innerHTML += `<div class="mini-card ${activeClass}"><img src="${photo.url}" alt="Image"></div>`;
+                        indexV++;
+                    }
+                });
+
+                if(indexV === 0 && gridVehicules) {
+                    gridVehicules.innerHTML = "<p style='position:absolute; width:100%; top:45%; font-size:10px; color:var(--text-dim); text-align:center;'>Aucune image de véhicule.</p>";
+                } else {
+                    setTimeout(() => { lancerFaireDefilerPhoto('grid-vehicules'); }, 300);
+                }
+            }, (error) => {
+                console.error("Erreur galerie:", error);
+                if(gridVehicules) gridVehicules.innerHTML = "<p style='position:absolute; width:100%; top:45%; font-size:10px; color:var(--text-dim); text-align:center;'>Erreur de connexion.</p>";
+            });
+        }
+
+        chargerPacksPremiumDynamiques();
+        chargerGaleriePhotosDynamique();
+
+        function ouvrirRecharge(nom, prix) {
+            const userTel = localStorage.getItem('userTel');
+            if (!userTel) { alert("Veuillez vous connecter d'abord."); return; }
+
+            const overlay = document.createElement('div');
+            overlay.id = "payOverlay";
+            overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:3000; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px);";
+            overlay.innerHTML = `
+                <div style="background:#1a1a1a; padding:25px; border-radius:25px; width:100%; max-width:400px; border:2px solid #333; text-align:center;">
+                    <i class="fas fa-wallet" style="font-size:40px; color:#e17306; margin-bottom:15px;"></i>
+                    <h2 style="color:white; font-size:18px;">RECHARGE SOLDE MBANZA</h2>
+                    <p style="color:#aaa; font-size:13px; margin-bottom:20px;">Payez <b>${prix.toLocaleString('fr-FR')} FC</b> puis collez l'ID :</p>
+                    <a href="tel:*144*1*1*0844290421*${prix}%23" style="display:block; background:#ff6600; color:white; text-decoration:none; padding:12px; border-radius:12px; font-weight:bold; margin-bottom:10px;">ORANGE MONEY (*144#)</a>
+                    <a href="tel:*1122*0844290421*${prix}%23" style="display:block; background:#e11a2b; color:white; text-decoration:none; padding:12px; border-radius:12px; font-weight:bold; margin-bottom:20px;">M-PESA (*1122#)</a>
+                    <div style="position:relative; margin-bottom:15px;">
+                        <input type="text" id="idTrans" placeholder="ID de Transaction" style="width:100%; padding:15px; background:#222; border:1px solid #444; color:white; border-radius:12px; text-align:center;">
+                        <button onclick="collerID()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#e17306; cursor:pointer; font-size:20px;"><i class="fas fa-paste"></i></button>
+                    </div>
+                    <button id="btnConfirmer" onclick="validerPaiement('${nom}', ${prix})" style="width:100%; background:var(--gradient); color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer;">ACTIVER MON SOLDE</button>
+                    <p onclick="document.getElementById('payOverlay').remove()" style="color:#666; font-size:12px; margin-top:20px; cursor:pointer;">Annuler</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        async function collerID() {
+            try {
+                const texte = await navigator.clipboard.readText();
+                if (texte) document.getElementById('idTrans').value = texte.trim();
+            } catch (err) {
+                alert("Collez l'ID manuellement.");
+            }
+        }
+
+        async function validerPaiement(nomPack, montantFC) {
+            const idTrans = document.getElementById('idTrans').value.trim();
+            const userTel = localStorage.getItem('userTel');
+            const btn = document.getElementById('btnConfirmer');
+
+            if (idTrans.length < 5) { alert("ID de transaction invalide."); return; }
+            btn.disabled = true; btn.innerText = "Envoi...";
+
+            try {
+                await db.collection("recharges_en_attente").add({
+                    client_tel: userTel,
+                    pack: nomPack,
+                    montant_a_ajouter: parseInt(montantFC), 
+                    transaction_id: idTrans,
+                    type_demande: "argent",
+                    statut: "en_attente",
+                    date: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                if(document.getElementById('payOverlay')) document.getElementById('payOverlay').remove();
+                alert(`✅ Demande de recharge de ${montantFC} FC envoyée avec succès !`);
+                window.location.href = "offres.html";
+            } catch (e) {
+                alert("Erreur de connexion.");
+                btn.disabled = false; btn.innerText = "ACTIVER MON SOLDE";
+            }
+        }
+
+        // =========================================================================
+        // --- SYSTÈME DE NOTIFICATION UNIFIÉ ET FLUIDE (FILE D'ATTENTE SÉCURISÉE) ---
+        // =========================================================================
+        function copierCodeNotif(code, btn) {
+            navigator.clipboard.writeText(code).then(() => {
+                btn.style.background = "#2ecc71"; btn.innerHTML = `COPIÉ !`;
+                setTimeout(() => { btn.style.background = "#e17306"; btn.innerHTML = `COPIER`; }, 2000);
+            });
+        }
+
+        function fermerNotifPro(docId) {
+            const box = document.getElementById(`notif-${docId}`);
+            if (box) { 
+                box.style.top = '-150px'; 
+                setTimeout(() => { 
+                    box.remove(); 
+                    // Libération du verrou pour le message suivant de la file d'attente
+                    notificationEnCoursDaffichage = false;
+                    traiterFileAttenteNotif();
+                }, 500); 
+            }
+            db.collection("notifications_privees").doc(docId).update({ lu: true })
+            .catch(e => console.log("Erreur synchro lu:", e));
+        }
+
+        var fileAttenteNotifs = [];
+        var notificationEnCoursDaffichage = false;
+
+        function traiterFileAttenteNotif() {
+            var zoneNotif = document.getElementById('zoneNotifications');
+            if (!zoneNotif) {
+                zoneNotif = document.createElement('div');
+                zoneNotif.id = 'zoneNotifications';
+                zoneNotif.style.cssText = "position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 99999; pointer-events: none;";
+                document.body.appendChild(zoneNotif);
+            }
+
+            if (notificationEnCoursDaffichage || fileAttenteNotifs.length === 0) return;
+
+            notificationEnCoursDaffichage = true;
+            var prochaineNotif = fileAttenteNotifs.shift(); 
+            var data = prochaineNotif.info;
+            var docId = prochaineNotif.id;
+
+            var audio = document.getElementById('notifSound');
+            if (audio) { audio.play().catch(function(e) { console.log("Audio en attente"); }); }
+
+            var notifBox = document.createElement('div');
+            notifBox.id = "notif-" + docId;
+            notifBox.style.cssText = "pointer-events: auto; background: #1a1a1a; color: white; padding: 16px; border-radius: 16px; border: 2px solid #e17306; box-shadow: 0 10px 30px rgba(225,115,6,0.35); position: fixed; top: -150px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);";
+
+            var htmlContenu = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: linear-gradient(135deg, #882727, #e17306); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fas fa-bolt" style="color: white;"></i></div>
+                    <div style="flex: 1; text-align: left;">
+                        <h4 style="margin: 0; color: #e17306; font-size: 15px;">MBANZA EXPRESS</h4>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: #ddd;">${data.message}</p>
+                    </div>
+                </div>
+            `;
+
+            if (data.code) {
+                htmlContenu += `
+                <div style="background: #262626; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                    <div><strong style="color: #fff;">${data.code}</strong></div>
+                    <button onclick="copierCodeNotif('${data.code}', this)" style="background: #e17306; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: bold; cursor: pointer;">COPIER</button>
+                </div>`;
+            }
+
+            htmlContenu += `
+                <div onclick="fermerNotifPro('${docId}')" style="position: absolute; top: 10px; right: 12px; color: #666; cursor: pointer;"><i class="fas fa-times-circle"></i></div>
+            `;
+
+            notifBox.innerHTML = htmlContenu;
+            document.body.appendChild(notifBox);
+            setTimeout(() => { notifBox.style.top = '20px'; }, 100);
+        }
+
+        const monNumeroPourNotif = localStorage.getItem('userTel');
+        if (monNumeroPourNotif) {
+            db.collection("notifications_privees")
+            .where("destinataire", "==", monNumeroPourNotif)
+            .where("lu", "==", false)
+            .onSnapshot(function(snapshot) {
+                snapshot.forEach(function(doc) {
+                    var docId = doc.id;
+                    var data = doc.data();
+
+                    var existe = fileAttenteNotifs.some(function(item) { return item.id === docId; });
+                    if (!existe && !document.getElementById("notif-" + docId)) {
+                        fileAttenteNotifs.push({ id: docId, info: data });
+                    }
+                });
+                traiterFileAttenteNotif();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mbanza Express | Dashboard Client</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
+    
+    <style>
+        /* =========================================================================
+           🎨 CLASSE TAXI RACING : DESIGN UNIQUE ÉCRAN UNIQUE SANS SCROLL
+           ========================================================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: #060608; 
+            color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            overflow: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-top: 5px;
+        }
+        header h1 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+        }
+        header h1 span { color: #e17306; }
+        header p {
+            font-size: 10px;
+            color: #666670;
+            text-transform: uppercase;
+            margin-top: 3px;
+            letter-spacing: 1px;
+        }
+
+        /* BANDEAU DES NOTIFICATIONS PRIVÉES DYNAMIQUES */
+        #zoneNotifications {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 380px;
+            z-index: 999999;
+            pointer-events: none;
+        }
+
+/* =========================================================================
+           🌀 CADRAN TACHYMÉTRIQUE CENTRAL & BOUTONS ORBITAUX (6 BOUTONS CORRIGÉS)
+           ========================================================================= */
+        .wheel-universe {
+            position: relative;
+            width: 330px;
+            height: 330px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px auto;
+        }
+
+        .tachometer-core {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #101014 40%, #07070a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 2px 6px rgba(255,255,255,0.05);
+            z-index: 10;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Jauge circulaire d'énergie - Verrouillée au centre */
+        .svg-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 220px;
+            height: 220px;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            z-index: 12;
+            pointer-events: none;
+        }
+        .svg-ring circle { 
+            fill: none; 
+            stroke-width: 5; 
+            cx: 110; 
+            cy: 110; 
+            r: 104; /* Ajusté pour épouser parfaitement le cadran de 220px */
+        }
+        .svg-ring .track { stroke: #121216; }
+        .svg-ring .fill {
+            stroke: #e17306;
+            stroke-linecap: round;
+            stroke-dasharray: 653; /* Périmètre exact calculé pour r=104 (2 * pi * 104) */
+            stroke-dashoffset: 653;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease;
+        }
+
+        .solde-label { font-size: 9px; color: #555562; font-weight: 700; letter-spacing: 1.5px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .solde-amount { font-size: 30px; font-weight: 900; letter-spacing: -1px; margin: 2px 0; color: #ffffff; }
+        .solde-currency { font-size: 13px; color: #e17306; font-weight: 800; }
+        .energy-status { font-size: 10px; color: #2ecc71; font-weight: 700; margin-top: 4px; display: flex; align-items: center; gap: 4px; transition: color 0.3s; }
+/* Style pour le compteur de trajets restants dans le cadran */
+        .trajets-restants-box {
+            font-size: 11px;
+            font-weight: 800;
+            color: #2ecc71; /* Vert flash pour bien le différencier de l'argent et de l'énergie */
+            background: rgba(46, 204, 113, 0.1);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin: 2px 0 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            letter-spacing: 0.5px;
+        }
+        .trajets-restants-box .trajets-label {
+            font-size: 7px;
+            color: #858593;
+            font-weight: 700;
+        }
+        #nbTrajetsRestants {
+            font-size: 13px;
+            font-weight: 900;
+            color: #ffffff; /* Le chiffre reste blanc pour bien ressortir */
+        }
+        /* Configuration de base absolue pour TOUS les boutons */
+        .orbital-action {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 58px;
+            height: 58px;
+            background: #0f0f13;
+            border: 1px solid #1c1c24;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #858593;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 25;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.5);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .orbital-action span { font-size: 8px; font-weight: 700; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+/* =========================================================================
+           📍 PLACEMENT TRIGONOMÉTRIQUE EXACT (6 BOUTONS CORRIGÉS SUR 360°)
+           ========================================================================= */
+        /* Rayon constant de 132px pour flotter de manière parfaitement symétrique sur la jauge */
+
+        /* 12h00 : Course (En haut) */
+        .pos-top          { transform: translate(calc(-50% + 0px), calc(-50% - 132px)); }
+        .pos-top:active, .pos-top.active { transform: translate(calc(-50% + 0px), calc(-50% - 132px)) scale(1.08); }
+
+        /* 02h00 : Ticket (À droite) */
+        .pos-right        { transform: translate(calc(-50% + 114px), calc(-50% - 66px)); }
+        .pos-right:active, .pos-right.active { transform: translate(calc(-50% + 114px), calc(-50% - 66px)) scale(1.08); }
+
+        /* 04h00 : Profil (En bas à droite) */
+        .pos-bottom-right { transform: translate(calc(-50% + 114px), calc(-50% + 66px)); }
+        .pos-bottom-right:active, .pos-bottom-right.active { transform: translate(calc(-50% + 114px), calc(-50% + 66px)) scale(1.08); }
+
+        /* 06h00 : Log (En bas) */
+        .pos-bottom       { transform: translate(calc(-50% + 0px), calc(-50% + 132px)); }
+        .pos-bottom:active, .pos-bottom.active { transform: translate(calc(-50% + 0px), calc(-50% + 132px)) scale(1.08); }
+
+        /* 08h00 : Support (En bas à gauche) */
+        .pos-bottom-left  { transform: translate(calc(-50% - 114px), calc(-50% + 66px)); }
+        .pos-bottom-left:active, .pos-bottom-left.active { transform: translate(calc(-50% - 114px), calc(-50% + 66px)) scale(1.08); }
+
+        /* 10h00 : Offres (À gauche) */
+        .pos-left         { transform: translate(calc(-50% - 114px), calc(-50% - 66px)); }
+        .pos-left:active, .pos-left.active { transform: translate(calc(-50% - 114px), calc(-50% - 66px)) scale(1.08); }
+
+        /* États graphiques unifiés (Sans écraser le positionnement) */
+        .orbital-action:active, .orbital-action.active {
+            border-color: #e17306;
+            color: #fff;
+            background: #e17306;
+            box-shadow: 0 0 22px rgba(225, 115, 6, 0.6);
+        }
+
+        /* Personnalisation esthétique pour la touche Support verte */
+        .orbital-action.support-btn { border-color: #2ecc71; color: #2ecc71; }
+        .orbital-action.support-btn:active, .orbital-action.support-btn.active {
+            background: #2ecc71; border-color: #2ecc71; color: #fff;
+            box-shadow: 0 0 22px rgba(46, 204, 113, 0.6);
+        }
+
+        /* =========================================================================
+           🛠️ CONSOLE ET MODULES INTERCHANGEABLES DE BAS DE PAGE
+           ========================================================================= */
+        .dynamic-panel {
+            width: 100%;
+            max-width: 350px;
+            height: 160px; /* Taille fixe pour garantir le format single screen */
+            background: #0b0b0e;
+            border: 1px solid #14141a;
+            border-radius: 18px;
+            padding: 12px;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Module de recherche de chauffeur */
+        .search-loader { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        .ripple { width: 35px; height: 35px; border: 3px solid #e17306; border-radius: 50%; animation: ripple 1s infinite; opacity: 0; }
+        @keyframes ripple { 0% { transform: scale(0.2); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+        
+        #btnAnnulerManuel {
+            background: #ff4757; color: white; border: none; padding: 6px 12px; border-radius: 8px;
+            font-size: 11px; font-weight: bold; cursor: pointer; margin-top: 8px; display: flex; align-items: center; gap: 6px;
+        }
+
+        /* Bloc Cartographie Intégrée */
+        #map-container { display: none; width: 100%; height: 100%; border-radius: 12px; overflow: hidden; border: 1px solid #1c1c24; }
+        #map { height: 100%; width: 100%; background: #111; }
+
+        /* Bouton de discussion flottant repositionné hors de danger */
+        #btnChatFlottant {
+            position: fixed; 
+            bottom: 195px; /* Rehaussé pour dégager complètement le bouton Profil et la carte */
+            right: 20px; 
+            width: 52px; 
+            height: 52px;
+            background: #e17306; 
+            color: white; 
+            border-radius: 50%; 
+            display: none; /* Configuré en flex via JS */
+            justify-content: center; 
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
+            z-index: 99999; /* Priorité absolue sur la carte */
+            cursor: pointer; 
+            border: 2px solid #fff;
+            font-size: 20px;
+            transition: transform 0.2s ease;
+        }
+        #btnChatFlottant:active { transform: scale(0.92); }
+
+        /* Badge de notification sur le bouton */
+        #badgeChat {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none; /* S'affiche s'il y a un message non lu */
+        }
+
+        /* Fenêtre de discussion alignée sur le bouton */
+        #driverChatBox {
+            display: none; /* Affiché uniquement lors du clic */
+            position: fixed;
+            bottom: 255px; /* Placé juste au-dessus du bouton de chat */
+            right: 20px;
+            width: 280px;
+            height: 320px;
+            background: #0b0b0e;
+            border: 1px solid #1c1c24;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 100000;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        /* Zone contenant la liste des messages */
+        #driverMessages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        /* Module Journal Historique */
+        #logPanel { display: none; flex-direction: column; gap: 6px; height: 100%; }
+        #listeTrajets { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; flex: 1; padding-right: 2px; }
+
+        /* Style des lignes d'historique */
+        .log-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #14141a; padding: 6px 10px; border-radius: 8px; font-size: 11px;
+            border-left: 3px solid #e17306;
+        }
+
+        /* MONITEUR DE CONFIGURATION SYSTEME */
+        .bottom-monitor {
+            width: 100%;
+            max-width: 350px;
+            background: #09090c;
+            border: 1px solid #121217;
+            border-radius: 14px;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .monitor-item { display: flex; flex-direction: column; }
+        .monitor-label { font-size: 8px; color: #4d4d5a; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .monitor-value { font-size: 12px; font-weight: 700; color: #eee; margin-top: 1px; }
+
+        /* MODAL DES ÉTOILES DE NOTATION */
+        #ratingModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000000; justify-content:center; align-items:center; }
+/* NOTIFICATIONS FLOTTANTES */
+        #zoneNotifications {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 99999;
+            pointer-events: none;
+        }
+
+        .notif-item {
+            pointer-events: auto;
+            background: #e17306; /* Orange Mbanza Express */
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideDownNotification 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            margin-bottom: 10px;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideDownNotification {
+            from { transform: translateY(-100px) translateX(-50%); opacity: 0; }
+            to { transform: translateY(0) translateX(-50%); opacity: 1; }
+        }
+
+        .notif-fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: 0.4s ease;
+        }
+
+        /* Animation Breathe/Pulse identique pour toutes les alertes Mbanza */
+        .notif-item-premium-pulse {
+            animation: slideDownNotification 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), pulseBreathe 2s infinite ease-in-out !important;
+        }
+/* 🌀 Le conteneur orbital prend toute la place et tourne depuis le centre */
+.orbital-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    animation: rotationOrbital 25s linear infinite;
+    pointer-events: none; /* Pour ne pas bloquer les clics au centre */
+}
+
+/* Réactiver les clics uniquement sur les boutons */
+.orbital-action {
+    pointer-events: auto;
+}
+
+/* Animation de la roue complète */
+@keyframes rotationOrbital {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 🛑 CONTRE-ROTATION CORRIGÉE : 
+   Chaque bouton garde son "translate" d'origine ET applique la rotation inverse */
+@keyframes rotationInverseTop {
+    from { transform: translate(calc(-50% + 0px), calc(-50% - 132px)) rotate(360deg); }
+    to { transform: translate(calc(-50% + 0px), calc(-50% - 132px)) rotate(0deg); }
+}
+@keyframes rotationInverseRight {
+    from { transform: translate(calc(-50% + 114px), calc(-50% - 66px)) rotate(360deg); }
+    to { transform: translate(calc(-50% + 114px), calc(-50% - 66px)) rotate(0deg); }
+}
+@keyframes rotationInverseBottomRight {
+    from { transform: translate(calc(-50% + 114px), calc(-50% + 66px)) rotate(360deg); }
+    to { transform: translate(calc(-50% + 114px), calc(-50% + 66px)) rotate(0deg); }
+}
+@keyframes rotationInverseBottom {
+    from { transform: translate(calc(-50% + 0px), calc(-50% + 132px)) rotate(360deg); }
+    to { transform: translate(calc(-50% + 0px), calc(-50% + 132px)) rotate(0deg); }
+}
+@keyframes rotationInverseBottomLeft {
+    from { transform: translate(calc(-50% - 114px), calc(-50% + 66px)) rotate(360deg); }
+    to { transform: translate(calc(-50% - 114px), calc(-50% + 66px)) rotate(0deg); }
+}
+@keyframes rotationInverseLeft {
+    from { transform: translate(calc(-50% - 114px), calc(-50% - 66px)) rotate(360deg); }
+    to { transform: translate(calc(-50% - 114px), calc(-50% - 66px)) rotate(0deg); }
+}
+
+/* Application des contre-rotations spécifiques à chaque position */
+.pos-top { animation: rotationInverseTop 25s linear infinite; }
+.pos-right { animation: rotationInverseRight 25s linear infinite; }
+.pos-bottom-right { animation: rotationInverseBottomRight 25s linear infinite; }
+.pos-bottom { animation: rotationInverseBottom 25s linear infinite; }
+.pos-bottom-left { animation: rotationInverseBottomLeft 25s linear infinite; }
+.pos-left { animation: rotationInverseLeft 25s linear infinite; }    </style>
+</head>
+<body>
+
+    <div id="zoneNotifications"></div>
+
+    <header>
+        <h1>MBANZA<span>EXPRESS</span></h1>
+        <p id="salutation">CONNEXION AU RÉSEAU...</p>
+    </header>
+
+    <main class="wheel-universe">
+    <svg class="svg-ring">
+        <circle class="track" cx="110" cy="110" r="104"></circle>
+        <circle class="fill" cx="110" cy="110" r="104" id="energyCircle"></circle>
+    </svg>
+
+    <!-- Le cœur du cadran reste fixe au centre -->
+    <div class="tachometer-core">
+        <span class="solde-label" id="userName">CHARGEMENT...</span>
+        <div class="solde-amount" id="soldeVal">0<span class="solde-currency"> FC</span></div>
+        <div class="energy-status" id="batteryText">
+            <i class="fas fa-bolt"></i> ÉNERGIE --%
+        </div>
+        <div class="trajets-restants-box" id="trajetsRestantsDiv">
+            <i class="fas fa-route"></i> <span id="trajetsVal">0</span> <span class="trajets-label"></span>
+        </div>
+    </div>
+
+    <!-- 🔥 C'EST CE CONTENEUR QUI VA TOURNER AVEC TES BOUTONS À L'INTÉRIEUR -->
+    <div class="orbital-container">
+        <div class="orbital-action pos-top active" id="btnCourse" onclick="window.location.href='paiement.html'">
+            <i class="fas fa-motorcycle"></i>
+            <span>Course</span>
+        </div>
+        
+        <div class="orbital-action pos-right" onclick="genererTicketQR()">
+            <i class="fas fa-qrcode"></i>
+            <span>Ticket</span>
+        </div>
+        
+        <div class="orbital-action pos-bottom-right" onclick="window.location.href='index.html'">
+            <i class="fas fa-home"></i>
+            <span>acceuil</span>
+        </div>
+
+        <div class="orbital-action pos-bottom" id="btnLog" onclick="switchPanel('log')">
+            <i class="fas fa-history"></i>
+            <span>recent</span>
+        </div>
+
+        <div class="orbital-action pos-bottom-left support-btn" id="btnSupportAdmin" onclick="window.toggleSupportChat()">
+            <span style="position: relative; display: inline-block;">
+                <i class="fas fa-headset"></i>
+                <span id="badgeSupport" style="display: none; position: absolute; top: -5px; right: -8px; background: #ff3333; color: white; font-size: 9px; font-weight: bold; border-radius: 50%; padding: 1px 5px; min-width: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">0</span>
+            </span>
+            <span>contact</span>
+        </div>
+
+        <div class="orbital-action pos-left" onclick="window.location.href='offres.html'">
+            <i class="fas fa-wallet"></i>
+            <span>Offres</span>
+        </div>
+    </div>
+</main>
+
+ <section class="dynamic-panel" id="mainConsolePanel">
+        
+        <div id="panelCourse" style="height: 100%;">
+            <div id="search-zone" class="search-loader">
+                <div class="ripple"></div>
+                <h4 style="margin-top: 8px; font-size: 12px; color:#fff;">Recherche de chauffeur en cours...</h4>
+            </div>
+
+            <div id="map-container">
+                <div id="map"></div>
+            </div>
+
+  <button id="btnChatFlottant" onclick="ouvrirMasquerChat(true)">
+    <i class="fas fa-comment-dots"></i>
+    <span id="badgeChat">0</span>
+</button>
+
+<div id="driverChatBox" style="display: none; position: fixed; z-index: 999999;">
+    <div class="chat-chauffeur-drag" style="background:#111; padding:6px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; cursor: move;">
+        <span style="font-size:11px; font-weight:bold; color:#e17306;"><i class="fas fa-user-shield"></i> Messagerie Chauffeur</span>
+        <i class="fas fa-times" onclick="ouvrirMasquerChat(false)" style="cursor:pointer; color:#888; font-size:14px; padding:2px;"></i>
+    </div>
+    <div id="driverMessages"></div>
+    <div style="padding: 6px; display: flex; gap: 6px; background: #0b0b0e; border-top: 1px solid #14141a;">
+        <input type="text" id="driverMsgInput" placeholder="Écrire un message..." style="background:#16161f; color:white; border:1px solid #222; flex:1; padding:6px 12px; border-radius:20px; font-size:12px; outline:none;">
+        <button onclick="sendDriverMessage()" style="background:#e17306; width:30px; height:30px; border-radius:50%; border:none; color:white; cursor:pointer; display:flex; justify-content:center; align-items:center;"><i class="fas fa-paper-plane" style="font-size:11px;"></i></button>
+    </div>
+</div>
+   <div id="supportChatBox" style="display: none; position: fixed; bottom: 180px; left: 20px; width: 290px; height: 350px; background: #0b0b0e; border: 1px solid #1c1c24; border-radius: 14px; box-shadow: 0 12px 35px rgba(0,0,0,0.8); z-index: 100000; overflow: hidden; flex-direction: column;">
+    
+    <div class="support-header-drag" style="background: #2ecc71; padding: 10px 12px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+        <span><i class="fas fa-headset"></i>messagerie Mbanza Express</span>
+        <button onclick="window.toggleSupportChat()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer; font-weight:bold;">&times;</button>
+    </div>
+
+    <div id="supportMessages" style="flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #07070a;">
+        </div>
+
+    <div style="padding: 10px; background: #0f0f13; display: flex; gap: 6px; border-top: 1px solid #1c1c24;">
+        <input type="text" id="supportInput" placeholder="Écrire à l'admin..." style="flex: 1; background: #07070a; border: 1px solid #1c1c24; color: white; padding: 8px 10px; border-radius: 8px; font-size: 12px;" onkeydown="if(event.key === 'Enter') window.sendSupportMessage()">
+        <button onclick="window.sendSupportMessage()" style="background: #2ecc71; border: none; color: white; padding: 0 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>         
+            <p id="defaultCourseText" style="text-align: center; font-size: 11px; color: #4d4d5a; padding-top: 45px;">Aucune course en cours. Prêt pour le départ.</p>
+        </div>
+
+        <div id="logPanel">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #14141a; padding-bottom:4px; margin-bottom:4px;">
+                <span style="font-size:10px; font-weight:bold; color:#e17306;">HISTORIQUE DES ENREGISTREMENTS</span>
+                <span id="compteurTrajets" style="font-size:9px; color:#555;">0 trajet</span>
+            </div>
+            <div id="listeTrajets"></div>
+        </div>
+
+    </section>
+
+    <footer class="bottom-monitor">
+        <div class="monitor-item">
+            <span class="monitor-label">État</span>
+            <span class="monitor-value" id="courseStatus" style="color: #2ecc71;">Libre </span>
+        </div>
+        <div class="monitor-item" style="text-align: right;">
+            <span class="monitor-label">Zone</span>
+            <span class="monitor-value" id="console-log">Mbanza-Ngungu</span>
+        </div>
+    </footer>
+
+    <div id="ratingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100000; align-items: center; justify-content: center;">
+    <div style="background:#0f0f14; width:85%; max-width:320px; padding:25px 20px; border-radius:20px; text-align:center; border:1px solid #e17306; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
+        <h3 style="color:white; margin-bottom:6px; font-size:16px; font-weight: 800; letter-spacing: 0.5px;">Course Terminée ! </h3>
+        <p style="color:#7f8c8d; font-size:12px; margin-bottom: 5px;">Votre avis compte pour Mbanza Express</p>
+        
+        <div style="font-size:28px; margin:20px 0; color:#44404c; display:flex; justify-content:center; gap:10px;" id="starContainer">
+            <i class="far fa-star" id="star-1" onclick="window.setRating(1)" style="cursor:pointer; transition: transform 0.2s, color 0.2s;"></i>
+            <i class="far fa-star" id="star-2" onclick="window.setRating(2)" style="cursor:pointer; transition: transform 0.2s, color 0.2s;"></i>
+            <i class="far fa-star" id="star-3" onclick="window.setRating(3)" style="cursor:pointer; transition: transform 0.2s, color 0.2s;"></i>
+            <i class="far fa-star" id="star-4" onclick="window.setRating(4)" style="cursor:pointer; transition: transform 0.2s, color 0.2s;"></i>
+            <i class="far fa-star" id="star-5" onclick="window.setRating(5)" style="cursor:pointer; transition: transform 0.2s, color 0.2s;"></i>
+        </div>
+        
+        <button onclick="window.envoyerNote()" style="width:100%; padding:12px; background:#e17306; color:white; border:none; border-radius:10px; font-weight:bold; font-size:13px; cursor:pointer; box-shadow: 0 4px 12px rgba(225,115,6,0.3); transition: 0.2s;">
+            VALIDER LA NOTE
+        </button>
+    </div>
+</div>
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, orderBy, limit, addDoc, updateDoc, getDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuration Firebase d'origine
+        const firebaseConfig = { apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg", projectId: "mbanza-express" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userTel = localStorage.getItem('userTel');
+
+        if(!userTel) window.location.href = "connexion.html";
+
+        let map, marker, unsubPos = null, unsubDriverChat = null, currentCourseId = null, evalAffichee = false, markerChauffeur = null;
+        let messagesLusCount = 0;
+        let alerteCritiqueDeclenchee = false;
+        let alerte80Declenchee = false;
+        let chauffeurAnoter = null;
+
+        // Variable globale pour stocker la note sélectionnée
+        let noteChoisie = 0;
+
+        // --- 🟢 FONCTION : SÉLECTIONNER ET ALLUMER LES ÉTOILES ---
+        window.setRating = function(note) {
+            noteChoisie = note; 
+            console.log("⭐ Note sélectionnée :", noteChoisie);
+
+            for (let i = 1; i <= 5; i++) {
+                const etoile = document.getElementById("star-" + i);
+                if (etoile) {
+                    if (i <= note) {
+                        etoile.style.color = "#e17306";    // Orange Mbanza Express
+                        etoile.style.transform = "scale(1.15)";
+                        etoile.classList.remove('far');    
+                        etoile.classList.add('fas');       // Étoile pleine
+                    } else {
+                        etoile.style.color = "#44404c";    // Gris sombre éteint
+                        etoile.style.transform = "scale(1)";
+                        etoile.classList.remove('fas');    
+                        etoile.classList.add('far');       // Étoile vide
+                    }
+                }
+            }
+        };
+
+        // --- 🟢 FONCTION : AFFICHER LA FENÊTRE D'ÉVALUATION ---
+        window.afficherEvaluation = (courseId, telChauffeur) => {
+            currentCourseId = courseId; 
+            chauffeurAnoter = telChauffeur;
+            const modal = document.getElementById('ratingModal');
+            if (modal) modal.style.display = 'flex';
+        };
+
+        // --- 🟢 FONCTION : LIBÉRATION ET RÉINITIALISATION APRÈS VALIDATION ---
+        function réinitialisationCompleteApresNotation() {
+            evalAffichee = false; // Le modal pourra s'ouvrir pour la prochaine course
+            noteChoisie = 0;
+            if (typeof window.setRating === "function") {
+                window.setRating(0); // On remet les étoiles à zéro (grises)
+            }
+        }
+
+        // --- 🟢 FONCTION : VALIDER ET ENVOYER LA NOTE ---
+        window.envoyerNote = async function() {
+            if (noteChoisie === 0) {
+                alert("⚠️ Veuillez sélectionner une note avant de valider.");
+                return;
+            }
+
+            // Récupération sécurisée de l'identifiant du trajet
+            const activeRideId = localStorage.getItem("activeRideId") || currentCourseId;
+
+            if (!activeRideId) {
+                const modal = document.getElementById('ratingModal');
+                if (modal) modal.style.display = 'none';
+                nettoyageAutomatiqueApresFin("libre");
+                return;
+            }
+
+            try {
+                // 1. VERROUILLAGE LOCAL IMMÉDIAT ANTI-F5 : On bloque le navigateur avant d'écrire sur Firebase
+                localStorage.setItem("trajet_evalue_" + activeRideId, "true");
+                
+                // On ferme immédiatement le modal graphiquement
+                const modal = document.getElementById('ratingModal');
+                if (modal) modal.style.display = 'none';
+                evalAffichee = true; // Empêche l'écouteur en tâche de fond de rouvrir le modal
+
+                console.log("Envoi de la note pour le trajet :", activeRideId);
+
+                // 2. ENVOI AU SERVEUR FIRESTORE
+                await updateDoc(doc(db, "evaluations", activeRideId), {
+                    note: noteChoisie,
+                    evaluation_faite: true,
+                    statut_evaluation: "termine"
+                });
+
+                alert("Merci pour votre note ! ⭐ Mbanza Express vous souhaite une excellente journée.");
+                
+                // Nettoyage de l'interface de course et réinitialisation globale des étoiles
+                nettoyageAutomatiqueApresFin("terminee");
+                réinitialisationCompleteApresNotation();
+
+            } catch (error) {
+                console.error("Erreur Firebase lors de la notation :", error);
+                // Sécurité : même si le réseau plante, on force la fermeture
+                const modal = document.getElementById('ratingModal');
+                if (modal) modal.style.display = 'none';
+                nettoyageAutomatiqueApresFin("terminee");
+            }
+        };     
+
+        // --- GESTION INTERNE COMMUTATION DES PANELS ---
+        window.switchPanel = function(target) {
+            document.querySelectorAll('.orbital-action').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('panelCourse').style.display = 'none';
+            document.getElementById('logPanel').style.display = 'none';
+
+            if(target === 'course') {
+                document.getElementById('btnCourse').classList.add('active');
+                document.getElementById('panelCourse').style.display = 'block';
+            } else if(target === 'log') {
+                document.getElementById('btnLog').classList.add('active');
+                document.getElementById('logPanel').style.display = 'flex';
+                chargerHistorique();
+            }
+        };
+
+        // --- SALUTATION CHRONOLOGIQUE ---
+        function actualiserEntete() {
+            const h = new Date().getHours();
+            const el = document.getElementById("salutation");
+            if(el) {
+                if(h >= 5 && h < 12) el.innerText = "BONJOUR";
+                else if(h >= 12 && h < 14) el.innerText = "BON AVANT-MIDI";
+                else if(h >= 14 && h < 18) el.innerText = "BON APRÈS-MIDI";
+                else el.innerText = "BONSOIR";
+            }
+        }
+        actualiserEntete();
+
+        // --- PROFIL UTILISATEUR NOM ET SOLDE ---
+        onSnapshot(doc(db, "utilisateurs", userTel), (s) => {
+            if(s.exists()){
+                const d = s.data();
+                
+                const affichageNom = d.nom_complet || `${d.prenom || ''} ${d.nom || 'CLIENT'}`;
+                if(document.getElementById('userName')) document.getElementById('userName').innerText = affichageNom.trim().toUpperCase();
+                
+                const soldeArgent = d.solde_trajets || d.solde_fc || 0; 
+                const trajetsRestants = parseInt(d.nombre_trajets_fixes || 0); 
+
+                // Trouve cette ligne dans ton code actuel :
+if(document.getElementById('soldeVal')) {
+    // MODIFICATION ICI : On utilise innerHTML pour injecter le span de couleur
+    document.getElementById('soldeVal').innerHTML = soldeArgent.toLocaleString('fr-FR') + ` <span style="color: #e17306; font-weight: bold;">FC</span>`;
+}
+
+                if(document.getElementById('trajetsVal')) {
+                    document.getElementById('trajetsVal').innerText = trajetsRestants + (trajetsRestants > 1 ? " Trajets" : " Trajet");
+                }
+
+                const maxSoldeBarre = d.max_solde_reference || 30000;
+                const pct = Math.min(Math.round((soldeArgent / maxSoldeBarre) * 100), 100);
+                
+                const circle = document.getElementById('energyCircle');
+                if(circle) {
+                    const offset = 653 - ((653 * pct) / 100);
+                    circle.style.strokeDashoffset = offset;
+                }
+
+                const txt = document.getElementById('batteryText');
+                if(txt) txt.innerHTML = `<i class="fas fa-bolt"></i> ÉNERGIE ${pct}%`;
+
+                let couleurAlerte = "#e17306";
+                if (pct <= 15 || soldeArgent < 2000) couleurAlerte = "#ff3333";
+                else if (pct > 50) couleurAlerte = "#2ecc71";
+
+                if(circle) circle.style.stroke = couleurAlerte;
+                if(txt) txt.style.color = couleurAlerte;
+
+                const audio = document.getElementById('notifSound');
+                if (pct <= 15 || soldeArgent < 2000) {
+                    if (!alerteCritiqueDeclenchee) {
+                        if(audio) audio.play().catch(()=>{});
+                        alert(`⚠️ ÉNERGIE CRITIQUE ! Il ne vous reste plus que ${soldeArgent.toLocaleString('fr-FR')} FC (${pct}%). Veuillez recharger.`);
+                        alerteCritiqueDeclenchee = true;
+                    }
+                } else if (pct <= 20) {
+                    if (!alerte80Declenchee) {
+                        if(audio) audio.play().catch(()=>{});
+                        alert(`⚠️ CONSOMMATION FORTE : Vous avez consommé plus de 80% de votre énergie.`);
+                        alerte80Declenchee = true;
+                    }
+                    alerteCritiqueDeclenchee = false;
+                } else {
+                    alerteCritiqueDeclenchee = false;
+                    alerte80Declenchee = false;
+                }
+            }
+        });
+
+        // --- ÉCOUTE DES ÉTATS DE TRAJET (FUSIONNÉE ET SÉCURISÉE ANTI-F5) ---
+        const qCourse = query(collection(db, "courses"), where("client_tel", "==", userTel), orderBy("heure", "desc"), limit(1));
+        onSnapshot(qCourse, (snap) => {
+            const lbl = document.getElementById('courseStatus');
+            const mapBox = document.getElementById('map-container');
+            const btnChat = document.getElementById('btnChatFlottant');
+            const searchBox = document.getElementById('search-zone');
+            const defText = document.getElementById('defaultCourseText');
+
+            if(snap.empty) return;
+            const c = snap.docs[0].data();
+            const cid = snap.docs[0].id;
+
+            // Si la course est en cours/active, on maintient son identifiant localement
+            if (["en_attente", "acceptee", "en_cours"].includes(c.statut)) {
+                localStorage.setItem("activeRideId", cid);
+            }
+
+            if(c.statut === "en_attente") {
+                switchPanel('course');
+                if(defText) defText.style.display = "none";
+                searchBox.style.display = "flex";
+                mapBox.style.display = "none";
+                btnChat.style.display = "none";
+                lbl.innerText = "Recherche chauffeur...";
+                lbl.style.color = "#e17306";
+                
+                evalAffichee = false; // Prêt pour l'évaluation dès qu'une nouvelle course commence
+                
+                gererAffichageAnnulation(cid);
+                partagerMaPosition(cid);
+            }
+            else if(["acceptee", "en_cours"].includes(c.statut)) {
+                switchPanel('course');
+                if(defText) defText.style.display = "none";
+                currentCourseId = cid;
+                searchBox.style.display = "none";
+                mapBox.style.display = "block";
+                
+                if(btnChat) btnChat.style.display = "flex"; 
+                
+                lbl.innerText = c.statut === "acceptee" ? "Chauffeur en route" : "En trajet ";
+                lbl.style.color = "#2ecc71";
+                
+                initMap();
+                initDriverChatListener(cid);
+                if(c.chauffeur_tel) suivreChauffeur(c.chauffeur_tel);
+                
+                evalAffichee = false; 
+            }
+            else {
+                // =========================================================
+                // 🏁 GESTION DU STATUT ANNULÉE OU TERMINÉE (VERROU ANTI-F5)
+                // =========================================================
+                if(defText) defText.style.display = "block";
+                searchBox.style.display = "none";
+                mapBox.style.display = "none";
+                btnChat.style.display = "none";
+                ouvrirMasquerChat(false);
+                lbl.innerText = c.statut === "terminee" ? "Terminée " : "Libre";
+                lbl.style.color = "#eee";
+                
+                if (c.statut === "terminee") {
+                    // 🛑 Lecture instantanée de la mémoire du téléphone (anti-F5)
+                    const dejaNoteDansLeNavigateur = localStorage.getItem("trajet_evalue_" + cid);
+
+                    // Si Firebase dit vrai OU que le stockage local contient "true" (suite à un F5)
+                    if (c.evaluation_faite === true || dejaNoteDansLeNavigateur === "true") {
+                        const modal = document.getElementById('ratingModal');
+                        if (modal) modal.style.display = 'none'; // Verrouillage forcé à l'état fermé
+                        evalAffichee = true; 
+                    } 
+                    // Sinon, si l'interface n'a jamais ouvert le modal pendant cette session, on l'affiche
+                    else if (!evalAffichee) {
+                        window.afficherEvaluation(cid, c.chauffeur_tel);
+                        evalAffichee = true;
+                    }
+                } else {
+                    // Si annulé, s'assurer que le modal reste éteint
+                    const modal = document.getElementById('ratingModal');
+                    if (modal) modal.style.display = 'none';
+                }
+
+                // Lancement du nettoyage ciblé selon le statut
+                nettoyageAutomatiqueApresFin(c.statut);
+            }
+        });
+
+        // --- MESSAGERIE CHAUFFEUR ---
+        window.ouvrirMasquerChat = function(ouvrir) {
+            const chatBox = document.getElementById('driverChatBox');
+            const badge = document.getElementById('badgeChat');
+            
+            if (ouvrir) {
+                chatBox.style.display = 'flex';
+                if(badge) {
+                    badge.innerText = "0";
+                    badge.style.display = "none";
+                }
+            } else {
+                chatBox.style.display = 'none';
+            }
+        };
+
+        function initDriverChatListener(courseId) {
+            if(unsubDriverChat) unsubDriverChat();
+            const cont = document.getElementById('driverMessages');
+            const badge = document.getElementById('badgeChat');
+            const box = document.getElementById('driverChatBox');
+            
+            const q = query(collection(db, `courses/${courseId}/conversations`), orderBy("date", "asc"));
+            unsubDriverChat = onSnapshot(q, (snap) => {
+                cont.innerHTML = "";
+                snap.forEach(d => {
+                    const m = d.data();
+                    const isMe = m.sender === userTel;
+                    const div = document.createElement('div');
+                    div.style.cssText = `padding: 6px 10px; border-radius: 8px; font-size: 11px; max-width: 80%; margin-bottom:4px; ${isMe ? 'align-self: flex-end; background: #e17306; color: white;' : 'align-self: flex-start; background: #1c1c24; color: #fff;'}`;
+                    div.innerText = m.texte;
+                    cont.appendChild(div);
+                });
+                cont.scrollTop = cont.scrollHeight;
+
+                if (box.style.display !== 'flex' && snap.size > messagesLusCount) {
+                    badge.style.display = 'block';
+                    badge.innerText = snap.size - messagesLusCount;
+                    const audio = document.getElementById('notifSound');
+                    if (audio) audio.play().catch(()=>{});
+                } else if(box.style.display === 'flex') {
+                    messagesLusCount = snap.size;
+                }
+            });
+        }
+
+        window.sendDriverMessage = async () => {
+            const input = document.getElementById('driverMsgInput');
+            if(!input.value.trim() || !currentCourseId) return;
+            await addDoc(collection(db, `courses/${currentCourseId}/conversations`), { sender: userTel, texte: input.value.trim(), date: serverTimestamp() });
+            input.value = "";
+        };
+
+        // --- CARTOGRAPHIE TECHNIQUE LEAFLET ---
+        function initMap() {
+            if(map) return;
+            map = L.map('map', { zoomControl: false }).setView([-5.2536, 14.8631], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            marker = L.marker([-5.2536, 14.8631]).addTo(map);
+        }
+
+        function suivreChauffeur(tel) {
+            if(unsubPos) unsubPos();
+            const motoIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/71/71422.png', iconSize: [24, 24], iconAnchor: [12, 12] });
+
+            unsubPos = onSnapshot(doc(db, "chauffeurs", tel), (s) => {
+                if(s.exists() && s.data().lat) {
+                    const data = s.data();
+                    const pos = [data.lat, data.lng];
+                    if (!markerChauffeur) markerChauffeur = L.marker(pos, {icon: motoIcon}).addTo(map);
+                    else markerChauffeur.setLatLng(pos);
+                    
+                    const group = new L.featureGroup([marker, markerChauffeur]);
+                    map.fitBounds(group.getBounds().pad(0.3)); 
+                }
+            });
+        }
+
+        // --- LOGIQUE DU SUPPORT TECHNIQUE (CORRIGÉE AVEC ALERTE BADGE) ---
+        let supportListenerUnsubscribe = null;
+        let messagesLusSupportCount = 0; // Stocke le nombre de messages connus
+        let supportInitialise = false;   // Évite d'allumer le badge pour l'historique au démarrage
+
+        window.toggleSupportChat = () => {
+            const box = document.getElementById('supportChatBox');
+            const badge = document.getElementById('badgeSupport');
+            if (!box) return;
+
+            const isVisible = box.style.display === 'flex';
+            box.style.display = isVisible ? 'none' : 'flex';
+
+            if (!isVisible) {
+                // Si on ouvre la boîte de discussion
+                initSupportListener();
+                
+                // On cache et réinitialise immédiatement le badge rouge
+                if (badge) {
+                    badge.innerText = "0";
+                    badge.style.display = "none";
+                }
+                
+                setTimeout(() => {
+                    const input = document.getElementById('supportInput');
+                    if (input) input.focus();
+                }, 100);
+            } else {
+                // Si on ferme la boîte de discussion, on garde l'écoute active en tâche de fond 
+                // pour capter les alertes, mais on détruit l'ancien unsubscribe si nécessaire.
+                // Note : Pour l'alerte en tâche de fond, on laisse tourner l'écouteur initSupportListener.
+            }
+        };
+
+        function initSupportListener() {
+            if (!userTel) return;
+            
+            // Si l'écouteur tourne déjà, on ne le recrée pas pour éviter les doublons
+            if (supportListenerUnsubscribe && document.getElementById('supportChatBox').style.display === 'flex') {
+                // Ajuste le compteur actuel pour valider la lecture
+                return;
+            }
+
+            const supportPath = `support_clients/${userTel}/messages`;
+            const q = query(collection(db, supportPath), orderBy("date", "asc"));
+
+            supportListenerUnsubscribe = onSnapshot(q, (snap) => {
+                const cont = document.getElementById('supportMessages');
+                const badge = document.getElementById('badgeSupport');
+                const box = document.getElementById('supportChatBox');
+                
+                if (!cont) return;
+                
+                cont.innerHTML = "";
+                snap.forEach(d => {
+                    const m = d.data();
+                    const isMe = (m.sender === userTel);
+                    
+                    const bubbleStyle = isMe 
+                        ? "align-self: flex-end; background: #e17306; color: white; padding: 8px 12px; border-radius: 12px 12px 0 12px; max-width: 80%; font-size: 13px; word-break: break-word; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"
+                        : "align-self: flex-start; background: #14141a; border: 1px solid #2ecc71; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 0; max-width: 80%; font-size: 13px; word-break: break-word; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
+                    
+                    cont.innerHTML += `<div style="${bubbleStyle} margin-bottom: 6px;">${m.texte}</div>`;
+                });
+                cont.scrollTop = cont.scrollHeight;
+
+                // 🔴 LOGIQUE DU BADGE ALERTE DU SUPPORT
+                if (!supportInitialise) {
+                    // Au premier chargement de la page, on compte juste l'historique existant sans alerter
+                    messagesLusSupportCount = snap.size;
+                    supportInitialise = true;
+                } else {
+                    const chatEstVisible = (box && box.style.display === 'flex');
+
+                    if (!chatEstVisible && snap.size > messagesLusSupportCount) {
+                        // Si le chat est fermé et qu'un nouveau message arrive, on affiche l'alerte !
+                        if (badge) {
+                            badge.style.display = 'block';
+                            badge.innerText = snap.size - messagesLusSupportCount;
+                        }
+                        
+                        // Déclenchement facultatif du son de notification
+                        const audio = document.getElementById('notifSound');
+                        if (audio) { audio.play().catch(() => {}); }
+                    } else if (chatEstVisible) {
+                        // Si le chat est grand ouvert, on met à jour le compteur (tout est lu)
+                        messagesLusSupportCount = snap.size;
+                        if (badge) badge.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        window.sendSupportMessage = async () => {
+            const input = document.getElementById('supportInput');
+            if (!input || !input.value.trim()) return;
+            try {
+                await addDoc(collection(db, `support_clients/${userTel}/messages`), {
+                    sender: userTel,
+                    texte: input.value.trim(),
+                    date: serverTimestamp()
+                });
+                input.value = "";
+            } catch (err) {
+                console.error("Erreur d'envoi au support :", err);
+            }
+        };
+
+        // Lance l'écoute discrète au démarrage de l'application pour capter les messages entrants
+        initSupportListener();
+        // --- DRAG AND DROP BOX SUPPORT ---
+        setTimeout(() => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (chatBox) {
+                const chatHeader = chatBox.querySelector('.support-header-drag'); 
+                let isDraggingChat = false;
+                let chatOffset = { x: 0, y: 0 };
+
+                chatHeader.addEventListener('mousedown', (e) => {
+                    isDraggingChat = true;
+                    chatOffset.x = e.clientX - chatBox.getBoundingClientRect().left;
+                    chatOffset.y = e.clientY - chatBox.getBoundingClientRect().top;
+                    chatBox.style.transition = "none";
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDraggingChat) return;
+                    let x = e.clientX - chatOffset.x;
+                    let y = e.clientY - chatOffset.y;
+                    chatBox.style.left = x + 'px';
+                    chatBox.style.top = y + 'px';
+                    chatBox.style.bottom = 'auto';
+                    chatBox.style.right = 'auto';
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDraggingChat = false;
+                });
+            }
+        }, 1000);
+
+        function partagerMaPosition(courseId) {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(async (pos) => {
+                    await updateDoc(doc(db, "courses", courseId), {
+                        client_lat: pos.coords.latitude,
+                        client_lng: pos.coords.longitude
+                    });
+                }, null, { enableHighAccuracy: true });
+            }
+        }
+
+        async function gererAffichageAnnulation(rideId) {
+            const snap = await getDoc(doc(db, "courses", rideId));
+            if (!snap.exists() || !snap.data().heure) return;
+            const delay = (5 * 60 * 1000) - (Date.now() - snap.data().heure.toDate().getTime());
+
+            const injectionBouton = () => {
+                if (!document.getElementById('btnAnnulerManuel')) {
+                    const btn = document.createElement('button');
+                    btn.id = "btnAnnulerManuel";
+                    btn.innerHTML = `<i class="fas fa-ban"></i> Annuler la recherche`;
+                    btn.onclick = async () => {
+                        if(confirm("Annuler votre commande ?")) await updateDoc(doc(db, "courses", rideId), { statut: "annulee" });
+                    };
+                    document.getElementById('search-zone').appendChild(btn);
+                }
+            };
+            if (delay <= 0) injectionBouton(); else setTimeout(injectionBouton, delay);
+        }
+
+        // --- 🟢 NETTOYAGE INTELLIGENT DU TABLEAU DE BORD ---
+        function nettoyageAutomatiqueApresFin(statutActuel) {
+            // On retire l'ID de la course active uniquement si la course n'est plus en cours
+            if (["terminee", "annulee", "libre"].includes(statutActuel)) {
+                localStorage.removeItem("activeRideId");
+            }
+            
+            // Désabonnement des écouteurs pour préserver la bande passante
+            if(unsubDriverChat) { unsubDriverChat(); unsubDriverChat = null; }
+            if(unsubPos) { unsubPos(); unsubPos = null; }
+            if(markerChauffeur && map) { map.removeLayer(markerChauffeur); markerChauffeur = null; }
+            messagesLusCount = 0;
+            
+            // ✨ SÉCURITÉ ANTI-F5 RIGOUREUSE : 
+            // Si le trajet est "terminee", on maintient absolument "evalAffichee = true".
+            // Cela ferme la porte à une réapparition au rafraîchissement.
+            if (statutActuel !== "terminee") {
+                evalAffichee = false; 
+            }
+        }
+
+        // --- TICKET QR CODE ---
+        window.genererTicketQR = async () => {
+            const activeRideId = localStorage.getItem("activeRideId");
+            let code = "----";
+            if (activeRideId) {
+                const snap = await getDoc(doc(db, "courses", activeRideId));
+                if (snap.exists()) {
+                    code = snap.data().code_validation || Math.floor(1000 + Math.random() * 9000).toString();
+                    if(!snap.data().code_validation) await updateDoc(doc(db, "courses", activeRideId), { code_validation: code });
+                }
+            }
+
+            let overlay = document.createElement('div');
+            overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,7,0.96); z-index:2000000; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(5px);";
+            overlay.innerHTML = `
+                <div style="background:#0f0f14; padding:20px; border-radius:20px; text-align:center; width:280px; border:1px solid #e17306;">
+                    <h3 style="font-size:12px; letter-spacing:1px; margin-bottom:15px; color:#fff; font-weight:bold;">TICKET DE VALIDATION</h3>
+                    <div id="qrcode" style="background:white; padding:8px; border-radius:8px; display:inline-block;"></div>
+                    <div style="margin-top:12px; background:#16161f; padding:8px; border-radius:6px;">
+                        <span style="font-size:8px; color:#555; display:block;">CODE À FOURNIR AU CHAUFFEUR</span>
+                        <strong style="font-size:22px; color:#fff; letter-spacing:3px;">${code}</strong>
+                    </div>
+                    <button id="closeTicketBtn" style="margin-top:12px; background:#e17306; border:none; color:white; padding:8px 20px; border-radius:6px; font-weight:bold; font-size:11px; cursor:pointer; width:100%;">FERMER</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.getElementById('closeTicketBtn').onclick = () => overlay.remove();
+
+            new QRCode(document.getElementById("qrcode"), { text: `VALIDATION:${activeRideId}`, width: 130, height: 130 });
+        };
+
+        // --- HISTORIQUE DES TRAJETS ---
+async function chargerHistorique() {
+    const list = document.getElementById('listeTrajets');
+    const q = query(collection(db, "courses"), where("client_tel", "==", userTel), where("statut", "==", "terminee"), orderBy("heure", "desc"), limit(5));
+    
+    onSnapshot(q, (snap) => {
+        document.getElementById('compteurTrajets').innerText = `${snap.size} trajet(s)`;
+        if (snap.empty) {
+            list.innerHTML = "<p style='text-align:center; font-size:11px; color:#444; padding-top:45px;'>Aucune course enregistrée.</p>";
+            return;
+        }
+        list.innerHTML = "";
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            let dateTexte = "Récent";
+            if (data.heure) {
+                const d = data.heure.toDate();
+                dateTexte = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + " à " + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            }
+            const prix = data.prix ? `${data.prix.toLocaleString('fr-FR')} FC` : "Tarif fixe";
+            
+            // Récupération dynamique des lieux
+            const depart = data.depart || "Départ inconnu";
+            const destination = data.destination || "Destination inconnue";
+            
+            const div = document.createElement('div');
+            div.className = "log-item";
+            // Modification du HTML ici pour afficher les lieux dynamiques
+            div.innerHTML = `
+                <div style="flex: 1;">
+                    <div style="color: #fff; font-size: 11px; font-weight: bold;">
+                        <i class="fas fa-dot-circle" style="color:#3498db; margin-right:5px;"></i>${depart}
+                    </div>
+                    <div style="color: #fff; font-size: 11px; font-weight: bold; margin-top: 3px;">
+                        <i class="fas fa-flag-checkered" style="color:#e17306; margin-right:5px;"></i>${destination}
+                    </div>
+                    <span style="color: #666; font-size: 9px; display:block; margin-top:5px;">${dateTexte}</span>
+                </div>
+                <div style="color: #e17306; font-weight: bold; margin-left: 10px;">${prix}</div>
+            `;
+            list.appendChild(div);
+        });
+    });
+}
+        // --- 🚀 FILE D'ATTENTE DES NOTIFICATIONS PRIVÉES ---
+        const monNumeroPourNotif = localStorage.getItem('userTel');
+        if (monNumeroPourNotif) {
+            let fileAttenteNotifs = [];
+            let notificationEnCoursDaffichage = false;
+
+            const qNotif = query(
+                collection(db, "notifications_privees"),
+                where("destinataire", "==", monNumeroPourNotif),
+                where("lu", "==", false)
+            );
+
+            onSnapshot(qNotif, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        const docId = change.doc.id;
+                        fileAttenteNotifs.push({ id: docId, info: data });
+                        traiterFileAttenteNotif();
+                    }
+                });
+            });
+
+            function traiterFileAttenteNotif() {
+                if (notificationEnCoursDaffichage || fileAttenteNotifs.length === 0) return;
+
+                notificationEnCoursDaffichage = true;
+                const prochaineNotif = fileAttenteNotifs.shift(); 
+                const data = prochaineNotif.info;
+                const docId = prochaineNotif.id;
+                const zoneNotif = document.getElementById('zoneNotifications');
+
+                const audio = document.getElementById('notifSound');
+                if (audio) { audio.play().catch(e => console.log("Audio bloqué")); }
+
+                // 🌟 CORRECTION CRITIQUE : Ajout de "const" pour éviter le conflit global sur F5
+                const notifBox = document.createElement('div');
+                notifBox.id = `notif-${docId}`;
+                notifBox.style.cssText = "pointer-events: auto; background: #e17306; color: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; position: relative; animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); word-wrap: break-word; overflow-wrap: break-word;";
+
+                notifBox.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; padding-right: 20px;">
+                        <i class="fas fa-rocket" style="font-size: 20px;"></i>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0; font-size: 14px; font-weight: bold;">${data.titre || 'MBANZA EXPRESS 🚀'}</h4>
+                            <p style="margin: 3px 0 0; font-size: 12px; opacity: 0.95; line-height: 1.3;">${data.message}</p>
+                        </div>
+                    </div>
+                    ${data.code ? `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; margin-top: 5px;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 9px; opacity: 0.7; text-transform: uppercase;">Code Abonnement</span>
+                            <strong style="font-size: 15px; color: #fff; letter-spacing: 1px;">${data.code}</strong>
+                        </div>
+                        <button onclick="copierCodeNotif('${data.code}', this)" style="background: #ffffff; color: #e17306; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s;">
+                            <i class="fas fa-copy"></i> COPIER
+                        </button>
+                    </div>
+                    ` : ''}
+                    <div onclick="fermerNotifPro('${docId}')" style="position: absolute; top: 10px; right: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 16px; transition: 0.2s;">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                `;
+
+                if (zoneNotif) zoneNotif.appendChild(notifBox);
+            }
+
+            window.fermerNotifPro = async function(docId) {
+                const box = document.getElementById(`notif-${docId}`);
+                if (box) {
+                    box.style.transform = 'translateY(-20px)';
+                    box.style.opacity = '0';
+                    box.style.transition = '0.4s';
+                    setTimeout(() => { 
+                        box.remove(); 
+                        notificationEnCoursDaffichage = false;
+                        // Relance immédiatement le traitement du message suivant dans la liste
+                        traiterFileAttenteNotif();
+                    }, 400);
+                }
+                try {
+                    await updateDoc(doc(db, "notifications_privees", docId), { lu: true });
+                } catch (e) {
+                    console.error("Erreur mise à jour notification privée :", e);
+                }
+            };
+
+            window.copierCodeNotif = function(code, btn) {
+                navigator.clipboard.writeText(code).then(() => {
+                    btn.style.background = "#2ecc71";
+                    btn.style.color = "#ffffff";
+                    btn.innerHTML = `<i class="fas fa-check"></i> COPIÉ !`;
+                    setTimeout(() => {
+                        btn.style.background = "#ffffff";
+                        btn.style.color = "#e17306";
+                        btn.innerHTML = `<i class="fas fa-copy"></i> COPIER`;
+                    }, 2000);
+                });
+            };
+        }
+
+        // --- 📢 NOTIFICATIONS CLASSIQUES ---
+        function initNotifications() {
+            const notifRef = collection(db, "utilisateurs", userTel, "notifications");
+            const qNotif = query(notifRef, orderBy("date", "desc"), limit(1));
+
+            onSnapshot(qNotif, (snapshot) => {
+                const zone = document.getElementById('zoneNotifications');
+                if (snapshot.empty) { zone.innerHTML = ""; return; }
+
+                const docSnap = snapshot.docs[0];
+                const n = docSnap.data();
+                const docId = docSnap.id;
+
+                zone.innerHTML = `
+                    <div class="notif-item notif-item-premium-pulse" data-id="${docId}">
+                        <i class="fas fa-rocket" style="font-size: 20px; color: #fff;"></i>
+                        <div style="flex: 1; padding-right: 20px;">
+                            <h4 style="margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${n.titre || 'MBANZA EXPRESS 🚀'}
+                            </h4>
+                            <p style="margin: 3px 0 0; font-size: 12px; opacity: 0.95; line-height: 1.3;">
+                                ${n.message}
+                            </p>
+                        </div>
+                        <div onclick="lireEtSupprimer('${docId}')" style="position: absolute; top: 12px; right: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 16px; transition: 0.2s;">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                    </div>
+                `;
+                
+                const audio = document.getElementById('notifSound');
+                if (audio) { audio.play().catch(() => {}); }
+            });
+        }
+
+        window.lireEtSupprimer = async (id) => {
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (el) {
+                el.classList.add('notif-fade-out');
+                setTimeout(async () => {
+                    // 🌟 NETTOYAGE : Suppression de la ligne erronée "deleteDoc(doc(docRef))" qui faisait cracher le script
+                    await deleteDoc(doc(db, "utilisateurs", userTel, "notifications", id));
+                }, 400);
+            }
+        };
+        // DRAG AND DROP BOUTON CHAT FLOTTANT
+        setTimeout(() => {
+            const btnFlottant = document.getElementById('btnChatFlottant');
+            if (!btnFlottant) return;
+
+            let isDraggingBtn = false;
+            let btnOffset = { x: 0, y: 0 };
+
+            btnFlottant.addEventListener('mousedown', (e) => {
+                isDraggingBtn = true;
+                btnFlottant.style.cursor = 'grabbing';
+                btnOffset.x = e.clientX - btnFlottant.getBoundingClientRect().left;
+                btnOffset.y = e.clientY - btnFlottant.getBoundingClientRect().top;
+                btnFlottant.style.transition = "none";
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDraggingBtn) return;
+                e.preventDefault(); 
+                let x = e.clientX - btnOffset.x;
+                let y = e.clientY - btnOffset.y;
+                
+                btnFlottant.style.left = x + 'px';
+                btnFlottant.style.top = y + 'px';
+                btnFlottant.style.bottom = 'auto';
+                btnFlottant.style.right = 'auto';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDraggingBtn = false;
+                if(btnFlottant) btnFlottant.style.cursor = 'grab';
+            });
+
+            btnFlottant.addEventListener('touchstart', (e) => {
+                isDraggingBtn = true;
+                const touch = e.touches[0];
+                btnOffset.x = touch.clientX - btnFlottant.getBoundingClientRect().left;
+                btnOffset.y = touch.clientY - btnFlottant.getBoundingClientRect().top;
+                btnFlottant.style.transition = "none";
+            }, { passive: false });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isDraggingBtn) return;
+                if (e.cancelable) e.preventDefault(); 
+                
+                const touch = e.touches[0];
+                let x = touch.clientX - btnOffset.x;
+                let y = touch.clientY - btnOffset.y;
+
+                const limiteMaxX = window.innerWidth - btnFlottant.offsetWidth - 15;
+                const limiteMaxY = window.innerHeight - btnFlottant.offsetHeight - 15;
+                
+                x = Math.max(15, Math.min(x, limiteMaxX));
+                y = Math.max(15, Math.min(y, limiteMaxY));
+
+                btnFlottant.style.left = x + 'px';
+                btnFlottant.style.top = y + 'px';
+                btnFlottant.style.bottom = 'auto';
+                btnFlottant.style.right = 'auto';
+            }, { passive: false });
+
+            document.addEventListener('touchend', () => {
+                isDraggingBtn = false;
+            });
+        }, 1200);
+
+        // Lancements initiaux
+        initNotifications();
+        chargerHistorique();
+// --- DRAG AND DROP FLOTTANT POUR LE CHAT CHAUFFEUR (SOURIS & TACTILE) ---
+        setTimeout(() => {
+            const chatBox = document.getElementById('driverChatBox');
+            if (chatBox) {
+                const headerDrag = chatBox.querySelector('.chat-chauffeur-drag'); 
+                let isDraggingChat = false;
+                let chatOffset = { x: 0, y: 0 };
+
+                // --- 💻 GESTION SUR PC (SOURIS) ---
+                headerDrag.addEventListener('mousedown', (e) => {
+                    isDraggingChat = true;
+                    chatOffset.x = e.clientX - chatBox.getBoundingClientRect().left;
+                    chatOffset.y = e.clientY - chatBox.getBoundingClientRect().top;
+                    chatBox.style.transition = "none";
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDraggingChat) return;
+                    let x = e.clientX - chatOffset.x;
+                    let y = e.clientY - chatOffset.y;
+
+                    // Limites de sécurité de l'écran
+                    const maxX = window.innerWidth - chatBox.offsetWidth - 10;
+                    const maxY = window.innerHeight - chatBox.offsetHeight - 10;
+                    x = Math.max(10, Math.min(x, maxX));
+                    y = Math.max(10, Math.min(y, maxY));
+
+                    chatBox.style.left = x + 'px';
+                    chatBox.style.top = y + 'px';
+                    chatBox.style.bottom = 'auto';
+                    chatBox.style.right = 'auto';
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDraggingChat = false;
+                });
+
+                // --- 📱 GESTION SUR TÉLÉPHONE (TACTILE) ---
+                headerDrag.addEventListener('touchstart', (e) => {
+                    isDraggingChat = true;
+                    const touch = e.touches[0];
+                    chatOffset.x = touch.clientX - chatBox.getBoundingClientRect().left;
+                    chatOffset.y = touch.clientY - chatBox.getBoundingClientRect().top;
+                    chatBox.style.transition = "none";
+                }, { passive: true });
+
+                document.addEventListener('touchmove', (e) => {
+                    if (!isDraggingChat) return;
+                    const touch = e.touches[0];
+                    let x = touch.clientX - chatOffset.x;
+                    let y = touch.clientY - chatOffset.y;
+
+                    // Limites de sécurité smartphone
+                    const maxX = window.innerWidth - chatBox.offsetWidth - 10;
+                    const maxY = window.innerHeight - chatBox.offsetHeight - 10;
+                    x = Math.max(10, Math.min(x, maxX));
+                    y = Math.max(10, Math.min(y, maxY));
+
+                    chatBox.style.left = x + 'px';
+                    chatBox.style.top = y + 'px';
+                    chatBox.style.bottom = 'auto';
+                    chatBox.style.right = 'auto';
+                }, { passive: true });
+
+                document.addEventListener('touchend', () => {
+                    isDraggingChat = false;
+                });
+            }
+        }, 1200);
+    </script>
+</body>
+</html>

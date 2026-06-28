@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mbanza Express Pro | Chauffeur</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Version avec une sonnerie de téléphone standard et forte qui tourne en boucle -->
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" preload="auto" loop></audio>
+    
+    <style>
+        :root { --bg: #050505; --card: #121212; --accent: #e17306; --text: #ffffff; --border: #222; --success: #27ae60; --blue: #3498db; --admin: #e74c3c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body, html { height: 100vh; width: 100vw; overflow: hidden; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+        
+        .header { height: 10vh; background: var(--card); padding: 0 4vw; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.1vw solid var(--border); }
+        .header h3 { font-size: 4vw; color: var(--accent); }
+        #real-time-clock { font-size: 2.8vw; color: #888; }
+        
+        .service-bar { height: 7vh; background: var(--card); padding: 0 5vw; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; }
+        .map-container { height: 22vh; padding: 2vh 4vw; display: flex; justify-content: center; align-items: center; }
+        #map { height: 100%; width: 100%; border-radius: 4vw; border: 2px solid var(--border); z-index: 1; }
+        
+        .stats-grid { height: 10vh; display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; padding: 0 4vw; margin-bottom: 2vh; }
+        .stat-card { background: var(--card); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 3vw; border: 1px solid var(--border); }
+        .stat-card h3 { color: var(--text); font-size: 4.5vw; }
+        .stat-card small { color: var(--accent); text-transform: uppercase; font-size: 2vw; font-weight: bold; }
+        
+        #main-action-zone { flex: 1; padding: 0 4vw 2vh 4vw; display: flex; flex-direction: column; gap: 2.5vw; overflow-y: auto; }
+        .btn-ride { padding: 3vw; border: none; border-radius: 2.5vw; font-weight: bold; font-size: 3.2vw; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 2vw; }
+        
+        .order-card { background: var(--card); padding: 4vw; border-radius: 3vw; border-left: 1vw solid var(--accent); display: flex; flex-direction: column; gap: 3vw; margin-bottom: 3vw; }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 12vw;
+            background: #1a1a1a;
+            border-radius: 6vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #333;
+        }
+        .slider-text { font-size: 3vw; color: #666; font-weight: bold; pointer-events: none; z-index: 1; }
+        .slider-handle {
+            position: absolute;
+            left: 1vw;
+            width: 10vw;
+            height: 10vw;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+            z-index: 2;
+            color: white;
+            touch-action: none;
+        }
+
+        .slider-handle:active { cursor: grabbing; }
+        .slider-fill { position: absolute; left: 0; height: 100%; background: rgba(39, 174, 96, 0.2); width: 0; z-index: 1; }
+
+        .btn-assistance-float {
+            position: fixed; bottom: 6vh; right: 5vw; width: 15vw; height: 15vw; background: var(--admin);
+            color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 20px rgba(225, 115, 6, 0.4); z-index: 1000; border: 2px solid rgba(255,255,255,0.1); font-size: 7vw;
+        }
+        .clignotant { animation: notif-pulse 1.2s infinite; border: 2px solid #fff !important; }
+        @keyframes notif-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .overlay { display: none; position: fixed; inset: 0; z-index: 9999; flex-direction: column; }
+        #chat-ui { background: #000; }
+        .chat-header { padding: 5vw 4vw; background: var(--card); border-bottom: 1px solid var(--border); color: white; display: flex; justify-content: space-between; align-items: center; }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 4vw; display: flex; flex-direction: column; gap: 3vw; background: #050505; }
+        .bubble { padding: 3vw 4vw; border-radius: 4vw; max-width: 75%; font-size: 3.8vw; line-height: 1.4; }
+        .bubble.me { align-self: flex-end; background: var(--accent); color: #000; border-bottom-right-radius: 1vw; }
+        .bubble.them { align-self: flex-start; background: #222; color: #fff; border-bottom-left-radius: 1vw; }
+        .chat-input-area { padding: 4vw; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 3vw; align-items: center; }
+        #chat-input { flex: 1; padding: 3.5vw; border-radius: 2vw; border: 1px solid #333; background: #000; color: white; outline: none; }
+        #send-btn { background: var(--accent); color: black; border: none; width: 12vw; height: 12vw; border-radius: 2vw; font-size: 5vw; }
+
+        #scanner-ui { background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
+        #reader { width: 80vw; border-radius: 5vw; overflow: hidden; border: 2px solid var(--accent); }
+        .switch { position: relative; width: 10vw; height: 5.5vw; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 10vw; }
+        .slider:before { position: absolute; content: ""; height: 4.5vw; width: 4.5vw; left: 0.5vw; bottom: 0.5vw; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(4.5vw); }
+        
+        #zoneNotifications { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 99999; pointer-events: none; }
+        .notif-item { pointer-events: auto; background: var(--accent); color: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; animation: slideDown 0.5s ease; cursor: pointer; margin-bottom: 10px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-all; }
+        @keyframes slideDown { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .notif-fade-out { opacity: 0; transform: translateY(-20px); transition: 0.4s; }
+        .notif-item span { display: -webkit-box; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .route-info { font-size: 3vw; color: #bbb; margin: 1vw 0; line-height: 1.4; background: rgba(255,255,255,0.03); padding: 1.5vw; border-radius: 1.5vw; border: 1px dashed #333; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER CORRIGÉ ET PROPRE -->
+<div class="header" style="background: #09090b; border-bottom: 1px solid #27272a; padding: 2vw 5vw; height: auto; min-height: 12vh; display: flex; justify-content: space-between; align-items: center;">
+    
+    <!-- Partie Gauche : Titre, Heure, Nom -->
+    <div style="display: flex; flex-direction: column; gap: 0.5vw;">
+        <h3 style="font-size: 5vw; letter-spacing: -0.5px; color: #fff; margin: 0;">MBANZA <span style="color: var(--accent);">EXPRESS</span></h3>
+        <div id="real-time-clock" style="font-size: 2.5vw; color: #a1a1aa; font-weight: 500;">--:--:--</div>
+        <div id="driver-name" style="font-size: 3vw; color: #fff; font-weight: bold;">Chargement...</div>
+    </div>
+    
+    <!-- Partie Droite : Bouton Quitter -->
+    <button onclick="deconnexion()" style="background: #18181b; border: 1px solid #27272a; color: #ef4444; padding: 2vw 4vw; border-radius: 8px; font-size: 3vw; font-weight: bold; white-space: nowrap;">
+        QUITTER
+    </button>
+</div>
+<!-- BARRE DE SERVICE -->
+<div class="service-bar">
+    <span id="status-label" style="font-size:3.5vw; font-weight:bold; color: #777;">HORS LIGNE</span>
+    <label class="switch"><input type="checkbox" id="service-toggle" onchange="toggleService()"><span class="slider"></span></label>
+</div>
+
+<div id="zoneNotifications"></div>
+<div class="map-container"><div id="map"></div></div><div class="stats-grid">
+    <div class="stat-card"><small>Courses</small><h3 id="daily-count">0</h3></div>
+    <div class="stat-card" onclick="document.getElementById('btn-secret-reset').style.display='block'"><small>Revenus</small><h3 id="daily-cash">0</h3></div>
+</div>
+
+<div id="main-action-zone">
+    <button id="floating-support" class="btn-assistance-float" onclick="ouvrirChat('admin')">
+        <i class="fas fa-headset"></i>
+    </button>
+
+    <div id="active-ride-zone" style="display:none; background: var(--accent); color: black; padding: 4vw; border-radius: 4vw;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3vw;">
+            <div><small style="font-weight: bold; opacity: 0.7;">PASSAGER</small><h4 id="client-target" style="font-size: 4.5vw;">---</h4></div>
+            <div style="text-align: right;"><small style="font-weight: bold; opacity: 0.7;">TARIF</small><h4 id="ride-price-display" style="font-size: 4.5vw;">0 FC</h4></div>
+        </div>
+        <button class="btn-ride" style="background: var(--blue); color: white; width:100%; margin-bottom:3vw;" onclick="ouvrirNavigation()">
+            <i class="fas fa-map-marked-alt"></i> LANCER LE GPS
+        </button>
+        <div style="display: flex; gap: 3vw;">
+            <button class="btn-ride" style="background: white; color: black; flex:1;" onclick="ouvrirChat('client')">
+                <i class="fas fa-comment-alt"></i> CHAT
+            </button>
+            <button class="btn-ride" style="background: black; color: white; flex:1;" onclick="demarrerScan()">
+                <i class="fas fa-qrcode"></i> SCANNER
+            </button>
+        </div>
+    </div>
+    
+    <div id="orders-list"></div>
+    <button id="btn-secret-reset" style="display:none;" onclick="localStorage.removeItem('activeRideData'); location.reload();">Réinitialiser le cache système</button>
+</div>
+
+<div id="chat-ui" class="overlay">
+    <div class="chat-header">
+        <span id="chat-title" style="font-size: 4.5vw;">Chat</span>
+        <i class="fas fa-times" onclick="fermerChat()" style="font-size:7vw; color: var(--admin);"></i>
+    </div>
+    <div id="chat-messages"></div>
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ecrire un message...">
+        <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<div id="scanner-ui" class="overlay">
+    <h2 style="color:white; margin-bottom:8vw;">VALIDATION COURSE</h2>
+    
+    <div id="reader"></div>
+
+    <div style="margin-top: 5vw; width: 80%; text-align: center;">
+        <p style="color: #888; font-size: 3vw; margin-bottom: 2vw;">Le scan ne marche pas ?</p>
+        <button onclick="validerParCodeManuel()" style="width: 100%; background: rgba(225, 115, 6, 0.2); color: #e17306; border: 2px solid #e17306; padding: 4vw; border-radius: 3vw; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 2vw;">
+            <i class="fas fa-keyboard"></i> UTILISER CODE DE SECOURS
+        </button>
+    </div>
+
+    <button onclick="fermerScanner()" style="margin-top:10vw; background:none; color:white; border:1px solid white; padding:4vw 10vw; border-radius:3vw;">ANNULER</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, collection, query, where, orderBy, updateDoc, addDoc, serverTimestamp, getDoc, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg", projectId: "mbanza-express" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const chauffeurTel = localStorage.getItem("chauffeur_tel");
+    let driverMarker = null;
+    let clientMarker = null;
+
+    const clientIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41]
+    });
+    
+    let isOnline = false;
+    let activeRide = null;
+    let watchID = null;
+    let map = null;
+    let chatListener = null;
+    let currentPath = "";
+    let html5QrCode = null;
+    let isChatOpen = false;
+    const notifAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+
+    let estPremierChargementSupport = true;
+    let estPremierChargementNotif = true;
+
+    window.onload = async () => {
+        if(!chauffeurTel) { window.location.href = "connexion chauffeur.html"; return; }
+        initMap(); 
+        demarrerHorloge(); 
+        chargerStatsDuJour();
+        
+        const snap = await getDoc(doc(db, "chauffeurs", chauffeurTel));
+        if(snap.exists()) {
+            document.getElementById('driver-name').innerText = snap.data().nom;
+            if(snap.data().en_service) { document.getElementById('service-toggle').checked = true; toggleService(); }
+        }
+        verifierCourseExistante();
+        surveillerCourseAutomatiquement();
+        ecouterNouveauxMessagesSupport();
+    };
+
+    function ecouterNouveauxMessagesSupport() {
+        const q = query(collection(db, `support_admin/${chauffeurTel}/messages`), orderBy("date", "desc"), limit(1));
+        onSnapshot(q, (snap) => {
+            if (estPremierChargementSupport) {
+                estPremierChargementSupport = false;
+                return;
+            }
+
+            if (!snap.empty) {
+                const msg = snap.docs[0].data();
+                if (msg.sender !== chauffeurTel && !isChatOpen) {
+                    const btn = document.getElementById('floating-support');
+                    btn.classList.add('clignotant');
+                    notifAudio.play().catch(() => {});
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                }
+            }
+        });
+    }
+
+    function demarrerHorloge() { 
+        setInterval(() => { 
+            document.getElementById('real-time-clock').innerText = new Date().toLocaleTimeString('fr-FR'); 
+        }, 1000); 
+    }
+
+    function initMap() {
+    // On initialise la carte avec les coordonnées de Mbanza-Ngungu
+    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-5.2536, 14.8622], 14);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // IMPORTANT : Force la carte à se recalculer une fois chargée
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 500);
+}
+
+   window.toggleService = () => {
+    isOnline = document.getElementById('service-toggle').checked;
+    const label = document.getElementById('status-label');
+    label.innerText = isOnline ? "EN SERVICE" : "HORS LIGNE";
+    label.style.color = isOnline ? "#27ae60" : "#777";
+
+    if(isOnline) {
+        ecouterDemandes();
+        
+        // Options GPS : Haute précision obligatoire pour un chauffeur
+        const geoOptions = { 
+            enableHighAccuracy: true, 
+            timeout: 15000, 
+            maximumAge: 0 
+        };
+
+        watchID = navigator.geolocation.watchPosition(p => {
+            const lat = p.coords.latitude;
+            const lng = p.coords.longitude;
+
+            // 1. Mise à jour Firebase
+            updateDoc(doc(db, "chauffeurs", chauffeurTel), { 
+                lat: lat, lng: lng, en_service: true, derniere_maj: serverTimestamp() 
+            });
+
+            // 2. Gestion du marqueur Chauffeur
+            if (!driverMarker) {
+                driverMarker = L.circleMarker([lat, lng], { 
+                    color: '#3498db', radius: 8, fillOpacity: 1, weight: 2 
+                }).addTo(map);
+            } else {
+                driverMarker.setLatLng([lat, lng]);
+            }
+            
+            // 3. Recentrage auto seulement si pas de course en cours
+            if (!activeRide) map.setView([lat, lng], 15);
+
+        }, (err) => {
+            console.error("Erreur GPS:", err);
+            alert("Erreur GPS : Activez votre localisation.");
+        }, geoOptions);
+
+    } else {
+        // Arrêt propre
+        if(watchID) navigator.geolocation.clearWatch(watchID);
+        updateDoc(doc(db, "chauffeurs", chauffeurTel), { en_service: false });
+        
+        if(driverMarker) { 
+            map.removeLayer(driverMarker); 
+            driverMarker = null; 
+        }
+        document.getElementById('orders-list').innerHTML = "";
+    }
+};
+    function ecouterDemandes() {
+        const q = query(collection(db, "courses"), where("statut", "==", "en_attente"));
+        onSnapshot(q, snap => {
+            if (!isOnline || activeRide) return;
+            const list = document.getElementById('orders-list');
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const c = d.data();
+                const rideId = d.id;
+
+                const departText = c.depart || "Non spécifié";
+                const destinationText = c.destination || "Non spécifié";
+
+                const orderDiv = document.createElement('div');
+                orderDiv.className = "order-card";
+                orderDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><b style="font-size:4.5vw; color:var(--success);">${c.prix} FC</b><br>
+                        <small style="color:#888;">Passager : ${c.client_nom}</small></span>
+                        <i class="fas fa-map-marker-alt" style="color:var(--accent)"></i>
+                    </div>
+                    <div class="route-info">
+                        <i class="fas fa-dot-circle" style="color:#3498db; width:4vw;"></i> <b>Départ:</b> ${departText}<br>
+                        <i class="fas fa-flag-checkered" style="color:var(--accent); width:4vw;"></i> <b>Dest:</b> ${destinationText}
+                    </div>
+                    <div class="slider-container" id="container-${rideId}">
+                        <span class="slider-text">GLISSER POUR ACCEPTER</span>
+                        <div class="slider-fill" id="fill-${rideId}"></div>
+                        <div class="slider-handle" id="handle-${rideId}"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                `;
+                list.appendChild(orderDiv);
+                initSliderLogic(rideId, c.client_nom, c.prix);
+            });
+        });
+    }
+
+    function initSliderLogic(id, nom, prix) {
+        const handle = document.getElementById(`handle-${id}`);
+        const container = document.getElementById(`container-${id}`);
+        const fill = document.getElementById(`fill-${id}`);
+        if (!handle || !container) return;
+
+        let isDragging = false;
+        let startX = 0;
+
+        const onStart = (e) => {
+            isDragging = true;
+            startX = (e.pageX || e.touches[0].pageX) - handle.offsetLeft;
+            handle.style.transition = "none";
+            fill.style.transition = "none";
+        };
+
+        const onMove = (e) => {
+            if (!isDragging) return;
+            const x = e.pageX || e.touches[0].pageX;
+            let delta = x - startX;
+            const maxDelta = container.offsetWidth - handle.offsetWidth - 10;
+            
+            if (delta < 0) delta = 0;
+            if (delta > maxDelta) delta = maxDelta;
+
+            handle.style.left = (delta + 5) + "px";
+            fill.style.width = (delta + handle.offsetWidth / 2) + "px";
+
+            if (delta >= maxDelta * 0.95) {
+                isDragging = false;
+                window.accepterCourse(id, nom, prix);
+            }
+        };
+
+        const onEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            handle.style.transition = "all 0.3s ease";
+            fill.style.transition = "all 0.3s ease";
+            handle.style.left = "1vw";
+            fill.style.width = "0px";
+        };
+
+        handle.addEventListener('touchstart', onStart, {passive: true});
+        window.addEventListener('touchmove', onMove, {passive: false});
+        window.addEventListener('touchend', onEnd);
+        handle.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+    }
+
+    window.accepterCourse = async (id, nom, prix) => {
+    try {
+        await updateDoc(doc(db, "courses", id), { 
+            statut: "acceptee", 
+            chauffeur_tel: chauffeurTel, 
+            date_acceptation: serverTimestamp() 
+        });
+        
+        activeRide = { id, nom, prix };
+        localStorage.setItem('activeRideData', JSON.stringify(activeRide));
+        verifierCourseExistante();
+
+        // --- SÉCURITÉ AUDIO ---
+        const son = document.getElementById('notifSound');
+        if (son) {
+            son.pause();        // Arrête la sonnerie immédiatement
+            son.currentTime = 0; // Remet le son au tout début pour la prochaine commande
+        }
+
+    } catch (e) { 
+        alert("Erreur d'acceptation."); 
+    }
+};
+
+    async function verifierCourseExistante() {
+        const saved = localStorage.getItem('activeRideData');
+        const rideZone = document.getElementById('active-ride-zone');
+        const ordersList = document.getElementById('orders-list');
+
+        if (saved) { 
+            activeRide = JSON.parse(saved); 
+            rideZone.style.display = "block";
+            document.getElementById('client-target').innerText = activeRide.nom;
+            document.getElementById('ride-price-display').innerText = activeRide.prix + " FC";
+            ordersList.style.display = "none";
+
+            const snap = await getDoc(doc(db, "courses", activeRide.id));
+            if (snap.exists()) {
+                const data = snap.data();
+                if (data.client_lat && data.client_lng) {
+                    if (clientMarker) map.removeLayer(clientMarker);
+                    clientMarker = L.marker([data.client_lat, data.client_lng], { icon: clientIcon })
+                                    .addTo(map)
+                                    .bindPopup("Client : " + data.client_nom);
+                    
+                    const currentDriverLatLng = driverMarker ? driverMarker.getLatLng() : null;
+                    const bounds = L.latLngBounds([currentDriverLatLng, [data.client_lat, data.client_lng]].filter(x => x));
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            }
+        } else {
+            rideZone.style.display = "none";
+            ordersList.style.display = "block";
+            if (clientMarker) { map.removeLayer(clientMarker); clientMarker = null; }
+        }
+    }
+
+    function surveillerCourseAutomatiquement() {
+        const saved = localStorage.getItem('activeRideData');
+        if (saved) {
+            const ride = JSON.parse(saved);
+            onSnapshot(doc(db, "courses", ride.id), (snap) => {
+                if (!snap.exists() || snap.data().statut === "terminee" || snap.data().statut === "annulee") {
+                    localStorage.removeItem('activeRideData'); activeRide = null; verifierCourseExistante();
+                }
+            });
+        }
+    }
+
+   window.ouvrirChat = (type) => {
+    isChatOpen = true;
+    if(type === 'admin') document.getElementById('floating-support').classList.remove('clignotant');
+    const ui = document.getElementById('chat-ui');
+    ui.style.display = "flex";
+    
+    if(type === 'admin') {
+        document.getElementById('chat-title').innerText = "Support Mbanza Express";
+        currentPath = `support_admin/${chauffeurTel}/messages`;
+    } else {
+        document.getElementById('chat-title').innerText = "Client: " + activeRide.nom;
+        currentPath = `courses/${activeRide.id}/conversations`;
+    }
+    
+    const q = query(collection(db, currentPath), orderBy("date", "asc"));
+    if(chatListener) chatListener();
+    
+    chatListener = onSnapshot(q, snap => {
+        const box = document.getElementById('chat-messages'); 
+        box.innerHTML = ""; 
+        
+        snap.forEach(m => {
+            const d = m.data();
+            if (!d.texte) return; 
+
+            let classeBulle = "them";
+            
+            if (d.sender === chauffeurTel) {
+                classeBulle = "me";
+            } else if (d.sender === "admin" || d.isSystem === true) {
+                // Si c'est l'admin qui s'est infiltré par erreur dans la course, on peut choisir de le masquer 
+                // ou de lui donner un style spécial pour capter le bug
+                if (type !== 'admin') return; // 👈 SÉCURITÉ : Bloque l'affichage de l'admin dans le chat privé de la course !
+                classeBulle = "admin-bubble"; // Style spécial pour le support
+            }
+
+            box.innerHTML += `<div class="bubble ${classeBulle}">${d.texte}</div>`;
+        });
+        box.scrollTop = box.scrollHeight;
+    });
+    
+// --- CODE SÉCURISÉ POUR LE BOUTON D'ENVOI ---
+    
+    // 1. On nettoie TOUJOURS le bouton pour éviter les doublons de clics
+    const sendBtn = document.getElementById('send-btn');
+    sendBtn.onclick = null; 
+    
+    // 2. On crée une variable LOCALE spécifique à cette ouverture de chat 
+    // pour éviter que le chemin ne change pendant l'envoi
+    const cheminEnvoiSecurise = currentPath; 
+    
+    sendBtn.onclick = async () => {
+        const inp = document.getElementById('chat-input'); 
+        const text = inp.value.trim();
+        if(!text) return;
+        
+        // Sécurité anti-double clic : On vide l'input et on désactive le bouton immédiatement
+        inp.value = ""; 
+        sendBtn.disabled = true;
+        
+        try {
+            // ✅ Utilisation du chemin sécurisé et figé pour cet écran de chat
+            await addDoc(collection(db, `courses/${activeRide.id}/conversations`), {
+    texte: text,
+    sender: chauffeurTel,
+    date: serverTimestamp()
+});
+        } catch (error) {
+            console.error("Erreur d'envoi :", error);
+            alert("Impossible d'envoyer le message.");
+        } finally {
+            // On réactive le bouton une fois que Firestore a validé l'enregistrement
+            sendBtn.disabled = false;
+            // On remet le focus sur l'input pour le message suivant
+            inp.focus(); 
+        }
+    };
+};
+
+window.fermerChat = () => { 
+    isChatOpen = false; 
+    document.getElementById('chat-ui').style.display = "none"; 
+    
+    // Nettoyage complet des écouteurs à la fermeture
+    if(chatListener) {
+        chatListener(); // Coupe l'écouteur Firestore en temps réel
+        chatListener = null;
+    }
+    document.getElementById('send-btn').onclick = null; // Supprime l'action du bouton
+};
+// On déclare une variable globale pour suivre l'état du scanneur
+let isscannerRunning = false;
+
+window.demarrerScan = async () => {
+    // 1. Afficher l'interface utilisateur immédiatement
+    document.getElementById('scanner-ui').style.display = "flex";
+    
+    // 2. Sécurité : Si un scan est déjà en cours, on ne recrée pas d'instance
+    if (isscannerRunning) return;
+
+    try {
+        // 3. Si html5QrCode n'existe pas encore, on l'initialise UNE SEULE FOIS
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+
+        isscannerRunning = true;
+
+        // 4. Démarrage du flux vidéo
+        await html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: 250 }, 
+            async (res) => {
+                // Dès qu'un QR code valide est détecté
+                // On récupère la course active depuis Firestore pour comparer le code
+                try {
+                    const courseRef = doc(db, "courses", activeRide.id);
+                    const snap = await getDoc(courseRef);
+                    
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const codeReel = data.code_validation; // Ton code à 4 chiffres en base
+
+                        // Comparaison du code scanné (res) avec le code réel (codeReel)
+                        if (res === codeReel) {
+                            // 🔒 SÉCURITÉ : On désactive immédiatement le scanner pour éviter les appels multiples
+                            isscannerRunning = false;
+                            await fermerScannerProprement();
+                            
+                            // Mise à jour en base
+                            await updateDoc(courseRef, { 
+                                statut: "terminee", 
+                                date_fin: serverTimestamp(),
+                                methode_validation: "qr_scan" 
+                            });
+
+                            alert("✅ QR Code validé ! Course terminée.");
+                            localStorage.removeItem('activeRideData');
+                            location.reload();
+                        } else {
+                            alert("❌ QR Code invalide : le code ne correspond pas à cette course.");
+                        }
+                    } else {
+                        alert("❌ Erreur : Course introuvable.");
+                    }
+                } catch (e) {
+                    console.error("Erreur lors de la validation scan :", e);
+                    alert("Erreur de validation.");
+                }
+            }
+        );
+
+    } catch (err) {
+        console.error("Erreur caméra : ", err);
+        alert("Erreur d'accès à la caméra. Assurez-vous que l'application a les permissions nécessaires.");
+        isscannerRunning = false;
+        document.getElementById('scanner-ui').style.display = "none";
+    }
+};
+
+// Fonction interne asynchrone pour couper proprement le matériel
+async function fermerScannerProprement() {
+    if (html5QrCode && isscannerRunning) {
+        try {
+            await html5QrCode.stop();
+        } catch (err) {
+            console.error("Erreur lors de l'arrêt de la caméra :", err);
+        }
+    }
+    // Réinitialisation des états et masquage de l'UI
+    isscannerRunning = false;
+    document.getElementById('scanner-ui').style.display = "none";
+}
+
+// Les boutons de l'interface pointent vers la fonction sécurisée
+window.fermerScanner = () => { fermerScannerProprement(); };
+window.annulerScan = () => { fermerScannerProprement(); };
+
+    async function finaliserCourse() {
+        try {
+            const courseRef = doc(db, "courses", activeRide.id);
+            const courseSnap = await getDoc(courseRef);
+            const courseData = courseSnap.data();
+            const clientTel = courseData.client_tel;
+
+            await updateDoc(courseRef, { statut: "terminee", date_fin: serverTimestamp() });
+
+            const clientRef = doc(db, "utilisateurs", clientTel);
+            const clientSnap = await getDoc(clientRef);
+            if (clientSnap.exists()) {
+                const clientData = clientSnap.data();
+                if (clientData.total_courses === 0 && clientData.parraine_par) {
+                    const parrainRef = doc(db, "utilisateurs", clientData.parraine_par);
+                    const parrainSnap = await getDoc(parrainRef);
+                    if (parrainSnap.exists()) {
+                        await updateDoc(parrainRef, { solde_trajets: (parrainSnap.data().solde_trajets || 0) + 100 });
+                        await addDoc(collection(db, "utilisateurs", clientData.parraine_par, "notifications"), {
+                            titre: "Récompense Parrainage ! 🎁",
+                            message: `Félicitations ! Votre ami ${clientData.nom_complet} a fait sa première course. Vous avez gagné 100 FC.`,
+                            date: serverTimestamp()
+                        });
+                    }
+                }
+                await updateDoc(clientRef, { total_courses: (clientData.total_courses || 0) + 1 });
+            }
+            document.getElementById('scanner-ui').style.display = "none";
+            alert("Course terminée avec succès !");
+            chargerStatsDuJour();
+        } catch (e) { alert("Erreur de finalisation."); }
+    }
+
+    async function chargerStatsDuJour() {
+        const start = new Date(); start.setHours(0,0,0,0);
+        const q = query(collection(db, "courses"), where("chauffeur_tel", "==", chauffeurTel), where("statut", "==", "terminee"), where("date_fin", ">=", start));
+        onSnapshot(q, snap => {
+            let total = 0;
+            document.getElementById('daily-count').innerText = snap.size;
+            snap.forEach(d => total += parseInt(d.data().prix || 0));
+            document.getElementById('daily-cash').innerText = total + " FC";
+        });
+    }
+
+    window.ouvrirNavigation = () => {
+        if (activeRide && activeRide.nom) {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeRide.nom)}`, '_blank');
+        }
+    };
+    
+    window.deconnexion = () => { localStorage.clear(); window.location.href = "connexion chauffeur.html"; };
+
+    const notifRef = collection(db, "chauffeurs", chauffeurTel, "notifications");
+    const qNotif = query(notifRef, orderBy("date", "desc"), limit(1));
+    onSnapshot(qNotif, (snapshot) => {
+        if (estPremierChargementNotif) {
+            estPremierChargementNotif = false;
+            return;
+        }
+
+        const zone = document.getElementById('zoneNotifications');
+        if (!zone || snapshot.empty) { if(zone) zone.innerHTML = ""; return; }
+        const n = snapshot.docs[0].data();
+        const docId = snapshot.docs[0].id;
+
+        zone.innerHTML = `<div class="notif-item" data-id="${docId}" onclick="lireEtSupprimer('${docId}')">
+            <div style="flex: 1;"><strong style="display: block; font-size: 14px;">${n.titre}</strong><span style="font-size: 13px; opacity: 0.9;">${n.message}</span></div>
+            <i class="fas fa-times-circle" style="margin-left: 10px; font-size: 18px;"></i>
+        </div>`;
+        document.getElementById('notifSound').play().catch(() => {});
+    });
+
+    window.lireEtSupprimer = async (id) => {
+        const element = document.querySelector(`[data-id="${id}"]`);
+        if (element) {
+            element.classList.add('notif-fade-out');
+            setTimeout(async () => { await deleteDoc(doc(db, "chauffeurs", chauffeurTel, "notifications", id)); }, 400);
+        }
+    };
+
+    window.validerParCodeManuel = async function() {
+        const savedRide = localStorage.getItem('activeRideData');
+        if (!savedRide) return alert("Aucune course active trouvée.");
+        
+        const ride = JSON.parse(savedRide);
+        const codeSaisi = prompt("Demandez au client son CODE DE SECOURS (4 chiffres) :");
+
+        if (codeSaisi) {
+            try {
+                const courseRef = doc(db, "courses", ride.id);
+                const snap = await getDoc(courseRef);
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const codeReel = data.code_validation;
+
+                    if (codeSaisi === codeReel) {
+                        await updateDoc(courseRef, { 
+                            statut: "terminee", 
+                            date_fin: serverTimestamp(),
+                            methode_validation: "code_manuel" 
+                        });
+                        
+                        alert("✅ Code valide ! Course terminée.");
+                        fermerScanner();
+                        localStorage.removeItem('activeRideData');
+                        location.reload();
+                    } else {
+                        alert("❌ Code incorrect ! Demandez au client de vérifier son écran.");
+                    }
+                }
+            } catch (e) {
+                alert("Erreur : " + e.message);
+            }
+        }
+    };
+</script>
+</script>
+</body>
+</html>

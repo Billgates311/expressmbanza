@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Guide d'Utilisation - Mbanza Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #121212;
+            --accent: #e17306;
+            --text: #ffffff;
+            --gray: #888888;
+            --border: #222222;
+            --danger: #eb4d4b;
+            --success: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 20px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: var(--accent);
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .section h2 {
+            color: var(--accent);
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2 i {
+            font-size: 16px;
+        }
+
+        .section p {
+            font-size: 14px;
+            color: #ddd;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        /* --- STYLE DES IMAGES --- */
+        .app-image-container {
+            width: 100%;
+            margin: 15px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #1a1a1a;
+        }
+
+        .app-image-container img {
+            width: 100%;
+            display: block;
+            height: auto;
+            max-height: 250px;
+            object-fit: cover;
+        }
+
+        ol, ul {
+            padding-left: 20px;
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .step-num {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .question-block {
+            margin-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 12px;
+        }
+
+        .question {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .question span {
+            color: var(--accent);
+        }
+
+        .reponse {
+            color: #bbbbbb;
+            margin-bottom: 12px;
+        }
+
+        .alert-box {
+            background: rgba(235, 77, 75, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+            color: #eee;
+        }
+
+        .info-box {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 15px;
+            color: #eee;
+        }
+
+        .table-politique {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .table-politique th, .table-politique td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table-politique th {
+            background: #1a1a1a;
+            color: var(--accent);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 11px;
+            color: var(--gray);
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Mbanza Express</h1>
+        <p>Guide officiel d'utilisation & règles de la plateforme</p>
+    </div>
+<div class="app-image-container">
+            <img src="bd.png" alt="Écran d'inscription et de sécurité PIN Mbanza Express">
+        </div>
+
+
+    <div class="section">
+        <h2><i class="fas fa-user-plus"></i> 1. Inscription et Sécurité</h2>
+        <p>Pour utiliser les services de transport Mbanza Express, votre compte doit être configuré correctement :</p>
+        
+        <div class="app-image-container">
+            <img src="prt.png" alt="Écran d'inscription et de sécurité PIN Mbanza Express">
+        </div>
+
+        <ul>
+            <li><strong>Numéro de téléphone :</strong> Introduisez votre numéro Orange, Vodacom ou Airtel. Il sert d'identifiant unique pour vos trajets et vos transactions financières.</li>
+            <li><strong>Code PIN Secret :</strong> Créez un code secret à 4 chiffres lors de votre première connexion. Ne le partagez avec personne. Ce code protège votre historique et vos accès personnels.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-route"></i> 2. Comment commander et valider une course ?</h2>
+        <p>Le système fonctionne de manière entièrement automatisée en 4 étapes simples :</p>
+        <ol>
+            <li><span class="step-num">Étape 1 : Calculez le trajet.</span> Choisissez votre point de départ et votre quartier de destination. L'application calcule immédiatement le prix fixe réglementé (ex: 1200 FC Quartier Mpete vers l'Université Kongo).</li>
+            <li><span class="step-num">Étape 2 : Payez votre course.</span> Validez par Mobile Money (M-Pesa, Orange Money). L'application génère automatiquement la syntaxe USSD sécurisée sur votre téléphone pour effectuer le paiement.</li>
+            <li><span class="step-num">Étape 3 : Recevez vos codes.</span> Dès le paiement validé, l'application génère un <strong>QR Code unique</strong> et un <strong>Code de secours à 4 chiffres</strong> sur votre écran.</li>
+            <li><span class="step-num">Étape 4 : Validez la fin du trajet.</span> Une fois arrivé à destination, le chauffeur scanne votre QR Code.</li>
+        </ol>
+
+        <div class="app-image-container">
+            <img src="qr.png" alt="Validation sécurisée par QR Code à la fin du trajet">
+        </div>
+
+        <div class="alert-box">
+            <i class="fas fa-exclamation-triangle"></i> <strong>Attention Sécurité :</strong> Ne montrez votre QR code et ne donnez votre code de secours au chauffeur <strong>qu'une fois arrivé à votre destination exacte</strong>.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-id-card"></i> 3. Le Système d'Abonnement (Forfaits)</h2>
+        <p>Pour éviter de payer par Mobile Money à chaque trajet, Mbanza Express vous propose un système de forfait prépayé par abonnement, idéal pour les clients réguliers (étudiants, travailleurs).</p>
+        
+        <div class="question-block">
+            <p class="question"><span>Q :</span> Comment fonctionne l'abonnement ?</p>
+            <p class="reponse">R : Vous achetez un pack de trajets (ex: 10 courses) en cliquant sur le bouton offres, RECHARGER votre pack. faites le paiement directement p		par ORANGE MONEY ou M.PESA et<strong>Code d'Abonnement Unique</strong> lié à votre numéro de téléphone vous sera attribué par notification.</p>
+<p class="question"><span>Q :</span> Comment fonctionne l'abonnement ?</p>
+            <p class="reponse">R : Vous achetez un pack de trajets (ex: 10 courses) à l'avance auprès de la direction. Un <strong>Code d'Abonnement Unique</strong> lié à votre numéro de téléphone vous sera attribué.</p>
+            </div>
+<div class="app-image-container">
+            <img src="abo.png" alt="Validation sécurisée par QR Code à la fin du trajet">
+        </div>
+            <p class="question"><span>Q :</span> Comment utiliser mon code pour commander ?</p>
+            <p class="reponse">R : Lors de votre commande, sur la page de paiement, sélectionnez l'option <strong>" Utiliser mon Abonnement"</strong> et entrez votre code secret abonnement. Si votre solde est suffisant, le trajet est déduit et votre QR Code de validation s'affiche instantanément en cliquant sur le code QR.</p>
+
+            <p class="question"><span>Q :</span> Quel est l'avantage par rapport au Mobile Money ?</p>
+            <p class="reponse">R : La validation est 100% instantanée. Même si les réseaux Orange Money ou M-Pesa dérangent ou tardent à Mbanza-Ngungu, votre code d'abonnement fonctionne directement sur notre base de données sans aucune attente.</p>
+        
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i> <strong>Note Administrative :</strong> Vos codes d'abonnement sont strictement personnels et copié votre code. L'application vérifie automatiquement que le numéro de téléphone qui passe la commande correspond bien au propriétaire du code enregistré. 
+
+⚠️copiez et protégez votre unique code pour utiliser dans chaque course 🚔
+</div>
+<div class="app-image-container">
+            <img src="code.png" alt="Validation sécurisée par QR Code à la fin du trajet">
+        </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-map-marked-alt"></i> 4. Localisation, Suivi et Communication</h2>
+        <p><strong>Recherche de quartier :</strong> Ne vous souciez pas de savoir si le chauffeur connaît votre quartier. L'application intègre une carte GPS en direct. Dès qu'un chauffeur accepte votre course, l'itinéraire s'ouvre sur son écran pour le guider directement vers votre position exacte.</p>
+        
+        <div class="app-image-container">
+            <img src="gps.png" alt="Suivi GPS en temps réel et interface de carte interactive">
+        </div>
+
+        <p><strong>Le Chat Privé gratuit :</strong> Besoin de préciser un détail logistique ? Dès que la course est acceptée, cliquez sur le bouton "Chat". Un espace de discussion interne s'ouvre pour écrire directement au chauffeur (ex: <i>"Je vous attends devant la pharmacie"</i>) sans dépenser vos unités téléphoniques.</p>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-headset"></i> 5. Contactez la Direction (Bouton Aide)</h2>
+        <p>En cas de problème (oubli d'un objet sur la moto, désaccord avec un chauffeur ou panne technique), cliquez immédiatement sur le bouton <strong>Aide</strong> disponible sur votre écran.</p>
+        <ul>
+<div class="app-image-container">
+            <img src="dirc.png" alt="Suivi GPS en temps réel et interface de carte interactive">
+        </div>
+            <li>Un salon de discussion direct avec le <strong>Support Mbanza Express</strong> s'ouvrira en plein écran.</li>
+            <li>Notre système de Bot intelligent répond instantanément aux questions courantes (tarifs, aide de base).</li>
+            <li>Si votre cas nécessite un arbitrage, une alerte est transmise directement à la direction (Super-Admin) pour une prise en charge humaine et immédiate.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-shield-alt"></i> 6. Charte de bonne conduite & Bonus</h2>
+        <table class="table-politique">
+            <thead>
+                <tr>
+                    <th>Règles d'utilisation</th>
+                    <th>Sanctions / Conséquences</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Commandes fictives ou fausses adresses répétées</td>
+                    <td>Blocage temporaire ou définitif du compte client.</td>
+                </tr>
+                <tr>
+                    <td>Manque de respect ou comportement dangereux envers un chauffeur</td>
+                    <td>Signalement immédiat dans le système et exclusion définitive.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="info-box" style="background: rgba(225, 115, 6, 0.1); border-left: 4px solid var(--accent);">
+<div class="app-image-container">
+            <img src="par.png" alt="Suivi GPS en temps réel et interface de carte interactive">
+        </div>
+
+            <i class="fas fa-gift"></i> <strong>Bonus Parrainage :</strong> Partagez l'application avec vos proches ! Dès qu'un ami parrainé effectue sa première course validée sur la plateforme, votre compte est créditée automatiquement de <strong>100 FC</strong> réutilisables pour vos propres trajets.
+        </div>
+         
+        <a href="index.html" style="color:rgb(243, 106, 15); text-decoration:none; width: 100%; background: var(--gradient); border: none; padding: 18px; border-radius: 20px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; display: block; text-align: center;">← Retour à l'accueil</a>
+    </div>
+
+    <div class="footer">
+        <p>Mbanza Express &copy; 2026 - Direction Financière et Administrative - Mbanza-Ngungu, RDC.</p>
+    </div>
+
+</body>
+</html>

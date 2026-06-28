@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mbanza Express | Inscription Directe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --bg: #050505; --card: #121212; --accent: #e17306; --text: #ffffff; --gray: #888; --border: #222; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+        .auth-container { width: 100%; max-width: 500px; background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid var(--border); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header i { font-size: 40px; color: var(--accent); margin-bottom: 10px; }
+        .rules-box { background: #1a1a1a; padding: 15px; border-radius: 12px; font-size: 13px; height: 130px; overflow-y: auto; margin-bottom: 15px; border: 1px solid var(--border); }
+        .rules-box li { margin-bottom: 8px; color: #ccc; list-style: none; display: flex; align-items: center; gap: 10px; }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .group { margin-bottom: 15px; }
+        label { display: block; font-size: 11px; color: var(--accent); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; }
+        input:focus { border-color: var(--accent); }
+        .choice-group { display: flex; gap: 15px; margin-top: 8px; background: #000; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+        .choice-item { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #ccc; }
+        .btn-main { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 15px; }
+        .btn-main:disabled { background: #333; color: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div class="header">
+        <i class="fas fa-id-badge"></i>
+        <h2>Dossier Chauffeur</h2>
+        <p style="color: var(--gray); font-size: 12px;">Système Mbanza Express</p>
+    </div>
+
+    <div id="step1">
+        <div class="rules-box">
+            <li><i class="fas fa-check-circle" style="color: var(--accent);"></i> Je certifie l'exactitude des infos.</li>
+            <li><i class="fas fa-check-circle" style="color: var(--accent);"></i> Respect des règles de sécurité.</li>
+            <li><i class="fas fa-check-circle" style="color: var(--accent);"></i> Engagement de service qualité.</li>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+            <input type="checkbox" id="acceptRules" onchange="toggleStepButton()">
+            <label for="acceptRules" style="text-transform: none; color: white;">J'accepte les conditions.</label>
+        </div>
+        <button class="btn-main" id="btnNext" disabled onclick="goToForm()">Continuer</button>
+    </div>
+
+    <div id="step2" class="form-section">
+        <div class="group">
+            <label>Code Entreprise</label>
+            <input type="text" id="regCode" placeholder="Ex: MB2026">
+        </div>
+        <div class="grid-2">
+            <div class="group"><label>Nom</label><input type="text" id="nom" placeholder="Ton Nom"></div>
+            <div class="group"><label>Post-nom</label><input type="text" id="postnom" placeholder="Ton Post-nom"></div>
+        </div>
+        <div class="grid-2">
+            <div class="group">
+                <label>Sexe</label>
+                <div class="choice-group">
+                    <label class="choice-item"><input type="radio" name="sexe" value="M" checked> M</label>
+                    <label class="choice-item"><input type="radio" name="sexe" value="F"> F</label>
+                </div>
+            </div>
+            <div class="group">
+                <label>État Civil</label>
+                <div class="choice-group">
+                    <label class="choice-item"><input type="radio" name="etat" value="Célibataire" checked> Célib.</label>
+                    <label class="choice-item"><input type="radio" name="etat" value="Marié"> Marié</label>
+                </div>
+            </div>
+        </div>
+        <div class="group"><label>Adresse</label><input type="text" id="adresse" placeholder="Quartier, Ville"></div>
+        <div class="grid-2">
+            <div class="group"><label>Moto / Plaque</label><input type="text" id="moto" placeholder="Haujue / TVS"></div>
+            <div class="group"><label>Téléphone</label><input type="tel" id="tel" placeholder="08..."></div>
+        </div>
+        <div class="group">
+            <label>PIN de connexion (6 chiffres)</label>
+            <input type="password" id="pin" placeholder="Code secret" maxlength="6">
+        </div>
+
+        <button class="btn-main" onclick="enregistrerChauffeur()" style="background: #27ae60;">Soumettre mon dossier</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg",
+        authDomain: "mbanza-express.firebaseapp.com",
+        projectId: "mbanza-express",
+        storageBucket: "mbanza-express.appspot.com",
+        messagingSenderId: "182597244795",
+        appId: "1:182597244795:web:3ba1dc36800db0374b4fde"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function toggleStepButton() {
+        document.getElementById('btnNext').disabled = !document.getElementById('acceptRules').checked;
+    }
+
+    function goToForm() {
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').classList.add('active');
+    }
+
+    async function enregistrerChauffeur() {
+        const tel = document.getElementById('tel').value.trim();
+        const codeEmp = document.getElementById('regCode').value.trim().toUpperCase();
+        const pin = document.getElementById('pin').value;
+
+        if (!tel || !pin || !codeEmp) return alert("Veuillez remplir tous les champs.");
+
+        try {
+            // 1. Vérifier le code d'invitation
+            const docRef = db.collection("codes_invitation").doc(codeEmp);
+            const docSnap = await docRef.get();
+
+            if (!docSnap.exists || docSnap.data().utilise) {
+                return alert("Code entreprise invalide ou déjà utilisé.");
+            }
+
+            // 2. Enregistrer le chauffeur
+            await db.collection("chauffeurs").doc(tel).set({
+                nom: document.getElementById('nom').value,
+                postnom: document.getElementById('postnom').value,
+                sexe: document.querySelector('input[name="sexe"]:checked').value,
+                etat_civil: document.querySelector('input[name="etat"]:checked').value,
+                adresse: document.getElementById('adresse').value,
+                moto: document.getElementById('moto').value,
+                telephone: tel,
+                pin: pin,
+                valide: true,
+                en_service: false,
+                date_inscription: firebase.firestore.Timestamp.now()
+            });
+
+            // 3. Désactiver le code
+            await docRef.update({ utilise: true, utilise_par: tel });
+
+            alert("Dossier enregistré avec succès !");
+            window.location.href = "index.html";
+        } catch (e) {
+            alert("Erreur technique : " + e.message);
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mbanza | Connexion Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#050505] text-white flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md bg-[#121212] p-8 rounded-3xl border border-[#222]">
+        <h2 class="text-2xl font-bold mb-6 text-[#e17306]">CONNEXION ADMIN</h2>
+        
+        <div class="space-y-4">
+            <input type="tel" id="telConnexion" placeholder="Votre numéro (08...)" class="w-full p-4 bg-[#0a0a0a] border border-[#222] rounded-xl outline-none focus:border-[#e17306]">
+            <input type="password" id="pinConnexion" placeholder="Code PIN" maxlength="6" class="w-full p-4 bg-[#0a0a0a] border border-[#222] rounded-xl outline-none">
+            
+            <div id="questionsSecurite" class="hidden space-y-4 mt-4 border-t border-[#222] pt-4">
+                <input type="text" id="villeCheck" placeholder="Ville de création ?" class="w-full p-4 bg-[#0a0a0a] border border-[#222] rounded-xl outline-none">
+                <input type="text" id="devCheck" placeholder="Surnom développeur ?" class="w-full p-4 bg-[#0a0a0a] border border-[#222] rounded-xl outline-none">
+            </div>
+        </div>
+
+        <button id="btnAction" onclick="gererConnexion()" class="w-full mt-8 p-4 bg-[#e17306] rounded-xl font-bold hover:bg-[#b05a04] transition">
+            CONTINUER
+        </button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzVt01984BB28lInzehcjm4Ltk28eN-Wg",
+            authDomain: "mbanza-express.firebaseapp.com",
+            projectId: "mbanza-express",
+            storageBucket: "mbanza-express.firebasestorage.app",
+            messagingSenderId: "182597244795",
+            appId: "1:182597244795:web:3ba1dc36800db0374b4fde"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let etape = 1; // 1 = Identification, 2 = Sécurité
+        let adminData = null;
+
+        window.gererConnexion = async () => {
+            const btn = document.getElementById('btnAction');
+
+            if (etape === 1) {
+                // Étape 1 : Vérifier si l'utilisateur existe
+                let tel = document.getElementById('telConnexion').value.trim();
+                if (tel.startsWith('0')) tel = '+243' + tel.substring(1);
+                else if (tel.length === 9) tel = '+243' + tel;
+
+                const snap = await getDoc(doc(db, "administrateurs", tel));
+                if (!snap.exists()) return alert("Numéro non reconnu.");
+
+                const data = snap.data();
+                if (data.pin !== document.getElementById('pinConnexion').value) return alert("Code PIN incorrect.");
+
+                // Si PIN correct, on passe à l'étape des questions
+                adminData = data;
+                document.getElementById('questionsSecurite').classList.remove('hidden');
+                btn.innerText = "VALIDER ET ENTRER";
+                etape = 2;
+
+           } else {
+                // Étape 2 : Vérifier les réponses secrètes
+                const ville = document.getElementById('villeCheck').value.toLowerCase();
+                const dev = document.getElementById('devCheck').value.toLowerCase();
+
+                if (ville === adminData.ville && dev === adminData.dev) {
+                    alert("Bienvenue " + adminData.nom);
+                    
+                    // 1. Récupérer le numéro formaté (on le stocke dans une variable globale ou on le reformate)
+                    let tel = document.getElementById('telConnexion').value.trim();
+                    if (tel.startsWith('0')) tel = '+243' + tel.substring(1);
+                    else if (tel.length === 9) tel = '+243' + tel;
+
+                    // 2. Sauvegarde la session
+                    localStorage.setItem("isAdmin", "true");
+                    localStorage.setItem("adminTel", tel);
+                    localStorage.setItem("adminNom", adminData.nom);
+
+                    // 3. REDIRECTION (Indispensable pour charger la page suivante)
+                    window.location.href = "super-admin-mbanzal.html";
+                    
+                } else {
+                    alert("Réponses de sécurité incorrectes.");
+                }
+            }
+    </script>
+</body>
+</html>
